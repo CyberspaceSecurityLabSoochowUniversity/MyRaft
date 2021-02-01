@@ -8,15 +8,17 @@ import (
 
 type Log struct {
 	//ApplyFunc   func(*LogEntry, Command) (interface{}, error)
-	file        *os.File
-	path        string
-	entries     []*LogEntry
-	startIndex  uint64
-	commitIndex uint64
-	mutex       sync.RWMutex
+	file        	*os.File
+	path        	string
+	entries     	[]*LogEntry
+	startIndex  	uint64
+	commitIndex 	uint64
+	LastLogIndex    uint64
+	LastLogTerm     uint64
+	mutex      	 	sync.RWMutex
 	//startIndex  uint64
 	//startTerm   uint64
-	initialized bool
+	initialized 	bool
 }
 
 func NewLog(serverPath string) *Log{

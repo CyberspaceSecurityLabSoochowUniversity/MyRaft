@@ -229,12 +229,16 @@ func (s *server) Peers() map[string]*Peer {
 	//return peers
 }
 
+//func NewPeer(name string,ip string,recPort int,state string,index uint64,term uint64,heartbeatInterval time.Duration,
+//	lastActivity time.Time) *Peer {
+
 func (s *server) AddPeer(request *AddPeerRequest) error {
-	if s.peers[request.peer.Name] != nil {
+	if s.peers[request.Name] != nil {
 		return nil
 	}
-	if s.name != request.peer.Name {
-		peer := NewPeer(request.peer.server, request.peer.Name, request.ip, s.heartbeatInterval)
+	if s.name != request.Name {
+		peer := NewPeer(request.Name,request.ip,request.port,request.state,request.LastLogIndex,
+			request.LastLogTerm,request.heartbeatInterval,request.lastActivity)
 
 		//if s.State() == Leader {		//如果服务器都是领导者了，那对等点就需要开始心跳了
 		//	peer.startHeartbeat()

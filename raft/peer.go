@@ -5,47 +5,46 @@ import (
 	"encoding/json"
 	"fmt"
 	"os"
-	"sync"
 	"time"
 )
 
 type Peer struct {
-	server            *server
 	Name              string
 	IP  			  string
-	Port			  int
+	Port			  int				//接收消息的Port
 	state             string
-	LogIndex      uint64
-	//stopChan          chan bool
+	LastLogIndex      uint64
+	LastLogTerm       uint64
 	heartbeatInterval time.Duration
 	lastActivity      time.Time
-	sync.RWMutex
 }
 
-func NewPeer(server *server, name string, ip string, heartbeatInterval time.Duration) *Peer {
+func NewPeer(name string,ip string,recPort int,state string,index uint64,term uint64,heartbeatInterval time.Duration,
+	lastActivity time.Time) *Peer {
 	return &Peer{
-		server:            server,
 		Name:              name,
 		IP:  			   ip,
-		Port:              server.recPort,
+		Port:              recPort,
+		state: state,
+		LastLogIndex: index,
+		LastLogTerm: term,
 		heartbeatInterval: heartbeatInterval,
+		lastActivity: lastActivity,
 	}
 }
 
-func (p *Peer) clone() *Peer {
-	p.Lock()
-	defer p.Unlock()
-	return &Peer{
-		server:            p.server,
-		Name:              p.Name,
-		IP:  			   p.IP,
-		Port:              p.Port,
-		state:			   p.state,
-		LogIndex: 		   p.LogIndex,
-		heartbeatInterval: p.heartbeatInterval,
-		lastActivity:      p.lastActivity,
-	}
-}
+//func (p *Peer) clone() *Peer {
+//	return &Peer{
+//		Name:              p.Name,
+//		IP:  			   p.IP,
+//		Port:              p.Port,
+//		state:			   p.state,
+//		LastLogIndex: 	   p.LastLogIndex,
+//		LastLogTerm:       p.LastLogIndex,
+//		heartbeatInterval: p.heartbeatInterval,
+//		lastActivity:      p.lastActivity,
+//	}
+//}
 
 func (p *Peer) setHeartbeatInterval(duration time.Duration) {
 	p.heartbeatInterval = duration
@@ -54,28 +53,52 @@ func (p *Peer) setHeartbeatInterval(duration time.Duration) {
 
 
 type AddPeerRequest struct {
-	peer  Peer			//添加的服务器信息
+	Name              string
+	IP  			  string
+	Port			  int				//接收消息的Port
+	state             string
+	LastLogIndex      uint64
+	LastLogTerm       uint64
+	heartbeatInterval time.Duration
+	lastActivity      time.Time
+
 	ip    string		//广播的地址
 	port  int			//广播的端口
 }
 
-func SendAddPeerRequest(peer *AddPeerRequest) {
-	if peer.ip == ""{
+func NewAddPeerRequest(server *server,ip string,port int) *AddPeerRequest {
+	apr := &AddPeerRequest{
+		Name: 					server.name,
+		IP: 					server.ip,
+		Port: 					server.recPort,
+		state: 					server.state,
+		LastLogIndex: 			server.log.LastLogIndex,
+		LastLogTerm: 			server.log.LastLogTerm,
+		heartbeatInterval: 		server.heartbeatInterval,
+		lastActivity: 			time.Now(),
+		ip: 					ip,
+		port:					port,
+	}
+	return apr
+}
+
+func SendAddPeerRequest(apr *AddPeerRequest) {
+	if apr.ip == ""{
 		fmt.Fprintln(os.Stdout,"SendAddPeerRequest: IP is blank!")
 		return
 	}
-	if peer.port <= 0{
+	if apr.port <= 0{
 		fmt.Fprintln(os.Stdout,"SendAddPeerRequest: Port is incorrect!")
 		return
 	}
-	message,err := json.Marshal(&peer)
+	message,err := json.Marshal(apr)
 	d := client.Date{Id: AddPeerOrder,Value: message}
 	data,err := json.Marshal(d)
 	if err != nil{
 		fmt.Fprintln(os.Stdout,"SendAddPeerRequest: Error converting data into Json!")
 		return
 	}
-	client.NewClient(peer.ip,peer.port,data)
+	client.NewClient(apr.ip,apr.port,data)
 }
 
 func ReceiveAddPeerRequest(message []byte) *AddPeerRequest {
