@@ -110,3 +110,15 @@ func ReceiveAddPeerRequest(message []byte) *AddPeerRequest {
 	}
 	return apr
 }
+
+func UpdatePeer(peer *Peer,name string,ip string,recPort int,state string,index uint64,
+	term uint64,heartbeatInterval time.Duration,lastActivity time.Time)  {
+	peer.Name = name
+	peer.IP = ip
+	peer.Port = recPort
+	peer.state = state
+	peer.LastLogIndex = index
+	peer.LastLogTerm = term
+	peer.heartbeatInterval = heartbeatInterval
+	peer.lastActivity = lastActivity
+}

@@ -35,4 +35,6 @@ var StopError = errors.New("raft: Has been stopped")
 //udp包头部代码块
 const(
 	AddPeerOrder = "1001"
+	VoteOrder = "1002"
+	VoteBackOrder = "1003"
 )

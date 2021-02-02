@@ -184,10 +184,6 @@ func (s *server) MaxWaitTimeServer() string {
 	return s.maxWaitTimeServer
 }
 
-func (s *server) VoteFor() string {
-	return s.votedFor
-}
-
 func (s *server) Log() *Log {
 	s.mutex.RLock()
 	defer s.mutex.RUnlock()
