@@ -17,6 +17,7 @@ const (
 const (
 	MaxLogEntriesPerRequest         = 2000
 	NumberOfLogEntriesAfterSnapshot = 200
+	MaxServerRecLen = 240
 )
 
 const (

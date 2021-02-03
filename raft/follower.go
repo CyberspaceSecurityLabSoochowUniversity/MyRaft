@@ -6,7 +6,7 @@ func Vote(s *server,vr *VoteRequest)  {
 	if s.log.LastLogTerm > vr.lastLogTerm || s.log.LastLogIndex > vr.lastLogIndex || s.Term() > vr.term{
 		state = Follower
 		vote = false
-	}else if s.state == Candidate{
+	}else if s.state == Candidate || s.votedFor == ""{
 		vote = false
 	}else if s.state == Leader{
 		state = Follower
@@ -17,9 +17,7 @@ func Vote(s *server,vr *VoteRequest)  {
 	vrp := &VoteResponse{
 		vote: 			vote,
 		name: 			s.name,
-		term: 			s.Term(),
-		lastLogIndex: 	s.log.LastLogIndex,
-		lastLogTerm: 	s.log.LastLogTerm,
+		state:          state,
 		ip: 			vr.serverIp,
 		port: 			vr.serverPort,
 	}

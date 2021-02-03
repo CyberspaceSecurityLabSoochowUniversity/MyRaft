@@ -68,9 +68,7 @@ func ReceiveVoteVoteRequest(message []byte) *VoteRequest {
 type VoteResponse struct {
 	vote            bool
 	name            string
-	term 			uint64
-	lastLogIndex   	uint64
-	lastLogTerm 	uint64
+	state			string
 	ip              string
 	port			int
 }
