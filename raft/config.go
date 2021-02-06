@@ -38,4 +38,11 @@ const(
 	AddPeerOrder = "1001"
 	VoteOrder = "1002"
 	VoteBackOrder = "1003"
+	HeartBeatOrder = "1004"
+)
+
+//默认广播的地址和端口
+const(
+	UdpIp = "192.168.1.255"
+	UdpPort = 10001
 )

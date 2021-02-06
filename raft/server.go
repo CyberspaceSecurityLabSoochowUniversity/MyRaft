@@ -47,6 +47,7 @@ type server struct {
 	maxLogEntriesPerRequest uint64			//最大一次请求的日志条目个数
 
 	routineGroup sync.WaitGroup				//并发队列锁
+	stopHeartBeatChan chan bool				//停止心跳通道
 }
 
 
@@ -348,6 +349,8 @@ func (s *server) Start() error {
 		return err
 	}
 	s.SetState(Follower)		//S设置服务器状态为跟随者
+	timeoutChan := afterBetween(s.ElectionTimeout(), s.ElectionTimeout()*2)		//开启选举超时
+
 
 	//此处代码为：启动服务器监听，一旦接收到值则运行相应的代码块
 	address := s.ip + ":" + strconv.Itoa(s.recPort)
@@ -400,11 +403,20 @@ func (s *server) Start() error {
 						if s.vote >= s.QuorumSize(){
 							s.state = Leader
 							//开始广播心跳
+							s.SetHeartbeatInterval(DefaultHeartbeatInterval)
+							startHeartBeat(s)		//领导者一上线就得广播心跳
 						}
 					}else{
 						s.state = vrp.state
 					}
 				}
+				break
+			case HeartBeatOrder:
+				hb := ReceiveHeartBeat(data1.Value)
+				if hb.logIndex > s.log.LastLogIndex{
+					//向领导者发送一个添加日志请求
+				}
+				timeoutChan = afterBetween(s.ElectionTimeout(), s.ElectionTimeout()*2)	//重置选举超时
 				break
 		}
 
@@ -414,8 +426,11 @@ func (s *server) Start() error {
 		}
 
 		//还需要考虑选举超时情况，添加对等点情况，发起请求情况等等
+		select {
+		case <-timeoutChan:
+			break
+		}
 	}
-
 	return nil
 }
 
