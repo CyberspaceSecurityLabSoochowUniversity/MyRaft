@@ -68,7 +68,7 @@ type Server interface {
 	LogPath() string
 	CommitIndex() uint64
 	IsLogEmpty() bool
-	LogEntries() []*LogEntry
+	LogEntries() []LogEntry
 
 	Leader() string
 
@@ -216,7 +216,7 @@ func (s *server) IsLogEmpty() bool {
 	return s.log.isEmpty()
 }
 
-func (s *server) LogEntries() []*LogEntry {
+func (s *server) LogEntries() []LogEntry {
 	s.log.mutex.RLock()
 	defer s.log.mutex.RUnlock()
 	return s.log.entries
@@ -415,8 +415,22 @@ func (s *server) Start() error {
 				hb := ReceiveHeartBeat(data1.Value)
 				if hb.logIndex > s.log.LastLogIndex{
 					//向领导者发送一个添加日志请求
+					ale := NewAppendLogEntry(s.name,s.ip,s.recPort,s.log.LastLogIndex,hb.serverIp,hb.serverPort)
+					SendAppendLogEntryRequest(ale)
 				}
 				timeoutChan = afterBetween(s.ElectionTimeout(), s.ElectionTimeout()*2)	//重置选举超时
+				break
+			case AppendLogEntryOrder:
+				ale := ReceiveAppendLogEntryRequest(data1.Value)
+				entry := s.log.entries[ale.logIndex:]
+				alerp := NewAppendLogEntryResponse(s.name,entry,ale.serverIp,ale.serverPort)
+				SendAppendLogEntryResponse(alerp)
+				break
+			case AppendLogEntryResponseOrder:
+				alerp := ReceiveAppendLogEntryResponse(data1.Value)
+				for _,i := range alerp.entry{
+					s.log.entries = append(s.log.entries, i)
+				}
 				break
 		}
 

@@ -39,6 +39,8 @@ const(
 	VoteOrder = "1002"
 	VoteBackOrder = "1003"
 	HeartBeatOrder = "1004"
+	AppendLogEntryOrder = "1005"
+	AppendLogEntryResponseOrder = "1006"
 )
 
 //默认广播的地址和端口
