@@ -29,7 +29,8 @@ type server struct {
 	maxWaitTimeServer string			//最大等待值服务器
 
 	votedFor   string					//投票的服务器名称
-	vote       int					//投赞成的票数
+	votedTerm  uint64					//投赞成票的任期
+	vote       int					    //投赞成的票数
 	log        *Log						//日志信息
 	leader     string					//领导者名称
 	peers      map[string]*Peer			//对等点
@@ -63,6 +64,7 @@ type Server interface {
 	WaitTime() uint64
 	MaxWaitTimeServer() string
 	VoteFor()	string
+	VotedTerm() uint64
 
 	Log() *Log
 	LogPath() string
@@ -190,6 +192,10 @@ func (s *server) WaitTime() uint64 {
 
 func (s *server) VoteFor() string {
 	return s.votedFor
+}
+
+func (s *server) VotedTerm() uint64 {
+	return s.votedTerm
 }
 
 func (s *server) MaxWaitTimeServer() string {
@@ -341,6 +347,27 @@ func (s *server) Init() error {
 	return nil
 }
 
+func (s *server) loop(conn *net.UDPConn)  {
+
+	state := s.State()
+
+	for state != Stopped {
+		switch state {		//四种状态对应四种处理方式
+		case Follower:
+			followerLoop(s,conn)
+		case Candidate:
+			candidateLoop(s,conn)
+		case Leader:
+			leaderLoop(s,conn)
+		//case Snapshotting:
+		//	snapshotLoop(s,conn)
+		}
+		state = s.State()	//处理完了可能需要改变服务器状态
+	}
+}
+
+
+
 func (s *server) Start() error {
 	if s.Running() {
 		return fmt.Errorf("raft.Server: Server already running[%v]", s.state)
@@ -365,6 +392,9 @@ func (s *server) Start() error {
 		return err
 	}
 	defer conn.Close()
+
+	s.loop(conn)
+
 	for{
 		data := make([]byte, MaxServerRecLen)
 		_,_,err := conn.ReadFromUDP(data)
@@ -439,7 +469,7 @@ func (s *server) Start() error {
 			break
 		}
 
-		//还需要考虑选举超时情况，添加对等点情况，发起请求情况等等
+		//还需要考虑选举超时情况，添加对等点情况，发起投票请求情况等等
 		select {
 		case <-timeoutChan:
 			break
@@ -473,4 +503,10 @@ func (s *server) SetState(state string) {		//测试专用，不能随便用，�
 	defer s.mutex.RUnlock()
 	s.state = state
 }
+
+func (s *server) promotable() bool {
+	return s.log.LastLogIndex > 0
+}
+
+
 
