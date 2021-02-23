@@ -8,41 +8,7 @@ import (
 	"os"
 )
 
-func Vote(s *server,vr *VoteRequest)  {
-	s.mutex.RLock()
-	defer s.mutex.RUnlock()
-	if s.VotedTerm() == s.Term(){
-		return
-	}
-	state := Candidate
-	vote := true
-	if s.log.LastLogTerm > vr.lastLogTerm || s.log.LastLogIndex > vr.lastLogIndex || s.Term() > vr.term{
-		state = Follower
-		vote = false
-	}else if s.state == Candidate || s.votedFor == ""{
-		vote = false
-	}else if s.state == Leader{
-		state = Follower
-		vote = false
-	}else{
-		s.votedFor = vr.name
-	}
-	if vote == true{
-		s.votedTerm = s.currentTerm
-	}
-	vrp := &VoteResponse{
-		vote: 			vote,
-		name: 			s.name,
-		state:          state,
-		ip: 			vr.serverIp,
-		port: 			vr.serverPort,
-	}
-	SendVoteResponse(vrp)
 
-	peer := s.peers[vr.name]
-	UpdatePeer(peer,peer.Name,peer.IP,peer.Port,state,vr.lastLogIndex,
-		vr.lastLogTerm,peer.heartbeatInterval,peer.lastActivity)
-}
 
 func followerLoop(s *server,conn *net.UDPConn) {
 	timeoutChan := afterBetween(s.ElectionTimeout(), s.ElectionTimeout()*2)		//开启选举超时
@@ -74,13 +40,13 @@ func followerLoop(s *server,conn *net.UDPConn) {
 			}
 			break
 		case VoteOrder:
-			//1.如何判断Follower当前任期已经投过票（设置投票任期变量）
 			vr := ReceiveVoteVoteRequest(data1.Value)
 			Vote(s,vr)
 			break
 		case HeartBeatOrder:
 			hb := ReceiveHeartBeat(data1.Value)
 			s.currentTerm = hb.term
+			s.leader = hb.name
 			if hb.logIndex > s.log.LastLogIndex{
 				//向领导者发送一个添加日志请求
 				ale := NewAppendLogEntry(s.name,s.ip,s.recPort,s.log.LastLogIndex,hb.serverIp,hb.serverPort)

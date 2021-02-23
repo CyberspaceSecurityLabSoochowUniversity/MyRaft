@@ -11,17 +11,16 @@
 #### 2021/2/22 星期一
 
 1. CandidateLoop代码完成
-
-2. CandidateLoop中还需要考虑投票的时间（因为当两个以上候选者平分投票，则谁也无法获得超过集群
-
-   一半的票数，则会不停的等待，当超过投票的时间，设为Follower状态）
-
+2. CandidateLoop中还需要考虑投票的时间（因为当两个以上候选者平分投票，则谁也无法获得超过集群一半的票数，则会不停的等待，当超过投票的时间，设为Follower状态）
 3. CandidateLoop中若收到领导者的心跳信息则应该主动设为Follower状态
 
-+ FollowerLoop、CandidateLoop、LeaderLoop中都需要考虑服务器突然下线的情况，以及下线需要做哪些
++ FollowerLoop、CandidateLoop、LeaderLoop中都需要考虑服务器突然下线的情况，以及下线需要做哪些处理
++ FollowerLoop、CandidateLoop中若收到心跳中的日志索引小于自身的索引则是否需要将日志与领导者保持一致？
+---
+#### 2021/2/23 星期二
 
-  处理
+1. LeaderLoop代码完成
+2. Follower、Candidater、Leader中都得考虑接收到投票的请求，代码中通过一个vote()函数解决
+3. 客户端发送给Leader的添加日志请求先写为key,value形式，这样后期如果需要修改也好修改
 
-+ FollowerLoop、CandidateLoop中若收到心跳中的日志索引小于自身的索引则是否需要将日志与领导者保
-
-  持一致？
++ 客户端添加日志请求通过广播形式发给集群中节点，到底时所有节点（所有节点都接收则如果不是leader需要转发这个添加请求给leader）只有Leader接收呢

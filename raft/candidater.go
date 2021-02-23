@@ -42,6 +42,10 @@ func candidateLoop(s *server,conn *net.UDPConn) {
 				fmt.Fprintln(os.Stdout, "Server add peer success:")
 			}
 			break
+		case VoteOrder:
+			vr := ReceiveVoteVoteRequest(data1.Value)
+			Vote(s,vr)
+			break
 		case VoteBackOrder:
 			if s.state == Candidate{
 				vrp := ReceiveVoteResponse(data1.Value)
@@ -52,8 +56,10 @@ func candidateLoop(s *server,conn *net.UDPConn) {
 						return
 					}
 				}else{
-					s.state = vrp.state
-					return
+					if vrp.state != Candidate{
+						s.state = vrp.state
+						return
+					}
 				}
 			}
 			break
@@ -67,6 +73,7 @@ func candidateLoop(s *server,conn *net.UDPConn) {
 			//此处是否需要考虑领导者节点日志索引小于其他一些节点的情况？如果考虑则需要让所有节点与领导者保持一致
 
 			s.currentTerm = hb.term
+			s.leader = hb.name
 			s.SetState(Follower)
 			return
 		case AppendLogEntryResponseOrder:

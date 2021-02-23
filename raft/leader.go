@@ -106,11 +106,35 @@ func leaderLoop(s *server,conn *net.UDPConn) {
 			fmt.Fprintln(os.Stdout, "ReceiveData Error:", err.Error())
 			return
 		}
+		switch data1.Id {
+		case AddPeerOrder:
+			apr := ReceiveAddPeerRequest(data1.Value)
+			err = s.AddPeer(apr)
+			if err != nil {
+				fmt.Fprintln(os.Stdout, "Server add peer error:", err.Error())
+			} else {
+				fmt.Fprintln(os.Stdout, "Server add peer success:")
+			}
+			break
+		case AppendLogEntryOrder:
+			ale := ReceiveAppendLogEntryRequest(data1.Value)
+			entry := s.log.entries[ale.logIndex:]
+			alerp := NewAppendLogEntryResponse(s.name,entry,ale.serverIp,ale.serverPort)
+			SendAppendLogEntryResponse(alerp)
+			break
+		case VoteOrder:
+			vr := ReceiveVoteVoteRequest(data1.Value)
+			Vote(s,vr)
+			break
+		case AddLogEntryOrder:
+			addle :=ReceiveAddLogEntryRequest(data1.Value)
+			key := addle.Key
+			value := addle.Value
+			logEntry := NewLogEntry(s.log,0, s.log.LastLogIndex+1, s.currentTerm,key,value)
+			s.log.entries = append(s.log.entries, *logEntry)
 
-		//接收客户端发来的添加日志的请求
+			//将日志条目持久化log文件中
 
-		//接收其他节点发来的添加日志请求
-
-		//接收请求投票的请求
+		}
 	}
 }

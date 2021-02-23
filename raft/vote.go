@@ -101,3 +101,40 @@ func ReceiveVoteResponse(message []byte) *VoteResponse {
 	}
 	return vrp
 }
+
+func Vote(s *server,vr *VoteRequest)  {
+	s.mutex.RLock()
+	defer s.mutex.RUnlock()
+	if s.VotedTerm() == s.Term(){
+		return
+	}
+	state := Candidate
+	vote := true
+	if s.log.LastLogTerm > vr.lastLogTerm || s.log.LastLogIndex > vr.lastLogIndex || s.Term() > vr.term{
+		state = Follower
+		vote = false
+	}else if s.state == Candidate{
+		vote = false
+	}else if s.state == Leader{
+		state = Follower
+		vote = false
+	}else{
+		s.votedFor = vr.name
+	}
+	if vote == true{
+		s.votedTerm = s.currentTerm
+		s.votedFor = vr.name
+	}
+	vrp := &VoteResponse{
+		vote: 			vote,
+		name: 			s.name,
+		state:          state,
+		ip: 			vr.serverIp,
+		port: 			vr.serverPort,
+	}
+	SendVoteResponse(vrp)
+
+	peer := s.peers[vr.name]
+	UpdatePeer(peer,peer.Name,peer.IP,peer.Port,state,vr.lastLogIndex,
+		vr.lastLogTerm,peer.heartbeatInterval,peer.lastActivity)
+}
