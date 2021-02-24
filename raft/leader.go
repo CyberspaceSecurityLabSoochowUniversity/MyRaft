@@ -115,6 +115,8 @@ func leaderLoop(s *server,conn *net.UDPConn) {
 			} else {
 				fmt.Fprintln(os.Stdout, "Server add peer success:")
 			}
+			apr1 := NewAddPeerRequest(s,apr.IP,apr.Port)
+			SendAddPeerRequest(apr1)
 			break
 		case AppendLogEntryOrder:
 			ale := ReceiveAppendLogEntryRequest(data1.Value)
@@ -134,6 +136,15 @@ func leaderLoop(s *server,conn *net.UDPConn) {
 			s.log.entries = append(s.log.entries, *logEntry)
 
 			//将日志条目持久化log文件中
+
+			break
+		case StopServer:
+			stopRequest := ReceiveStopRequest(data1.Value)
+			if stopRequest.name == s.name{
+				s.Stop()
+				return
+			}
+			break
 
 		}
 	}

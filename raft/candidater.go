@@ -13,7 +13,7 @@ func candidateLoop(s *server,conn *net.UDPConn) {
 	timeoutChan := afterBetween(s.ElectionTimeout(), s.ElectionTimeout()*2)
 	//此处需要定义投票超时时间
 	for s.State() == Candidate {
-		//循环发起发起投票请求，以防有些节点出现丢包情况
+		//循环发起发起投票请求，以防有些节点出现丢包情况和有新节点加入集群的情况
 		vr := NewVoteRequest(s,UdpIp,UdpPort)
 		SendVoteRequest(vr)
 
@@ -41,6 +41,8 @@ func candidateLoop(s *server,conn *net.UDPConn) {
 			} else {
 				fmt.Fprintln(os.Stdout, "Server add peer success:")
 			}
+			apr1 := NewAddPeerRequest(s,apr.IP,apr.Port)
+			SendAddPeerRequest(apr1)
 			break
 		case VoteOrder:
 			vr := ReceiveVoteVoteRequest(data1.Value)
@@ -83,6 +85,13 @@ func candidateLoop(s *server,conn *net.UDPConn) {
 			}
 			s.log.LastLogIndex += uint64(len(alerp.entry))
 			s.log.LastLogTerm = uint64(alerp.entry[len(alerp.entry)-1].Term)
+			break
+		case StopServer:
+			stopRequest := ReceiveStopRequest(data1.Value)
+			if stopRequest.name == s.name{
+				s.Stop()
+				return
+			}
 			break
 		}
 

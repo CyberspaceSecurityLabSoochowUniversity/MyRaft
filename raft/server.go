@@ -251,13 +251,8 @@ func (s *server) AddPeer(request *AddPeerRequest) error {
 		return nil
 	}
 	if s.name != request.Name {
-		peer := NewPeer(request.Name,request.ip,request.port,request.state,request.LastLogIndex,
+		peer := NewPeer(request.Name,request.IP,request.Port,request.state,request.LastLogIndex,
 			request.LastLogTerm,request.heartbeatInterval,request.lastActivity)
-
-		//if s.State() == Leader {		//如果服务器都是领导者了，那对等点就需要开始心跳了
-		//	peer.startHeartbeat()
-		//}
-
 		s.peers[peer.Name] = peer		//添加对等点
 	}
 	return nil
@@ -364,6 +359,7 @@ func (s *server) loop(conn *net.UDPConn)  {
 		}
 		state = s.State()	//处理完了可能需要改变服务器状态
 	}
+	s.Stop()
 }
 
 
@@ -481,11 +477,17 @@ func (s *server) Start() error {
 func (s *server) Stop() {
 	if s.State() == Stopped {		//已关闭过了
 		return
+	} else if s.State() == Follower{
+
+	}else if s.State() == Candidate{
+
+	}else if s.State() == Leader{
+
 	}
 
 	// make sure all goroutines have stopped before we close the log
 	//关闭之前确定所有的日志协程都被关闭了
-	s.routineGroup.Wait()
+	//s.routineGroup.Wait()
 
 	//s.log.close()		//日志关闭
 

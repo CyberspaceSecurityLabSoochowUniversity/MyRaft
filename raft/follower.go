@@ -38,6 +38,8 @@ func followerLoop(s *server,conn *net.UDPConn) {
 			} else {
 				fmt.Fprintln(os.Stdout, "Server add peer success:")
 			}
+			apr1 := NewAddPeerRequest(s,apr.IP,apr.Port)
+			SendAddPeerRequest(apr1)
 			break
 		case VoteOrder:
 			vr := ReceiveVoteVoteRequest(data1.Value)
@@ -64,6 +66,13 @@ func followerLoop(s *server,conn *net.UDPConn) {
 			}
 			s.log.LastLogIndex += uint64(len(alerp.entry))
 			s.log.LastLogTerm = uint64(alerp.entry[len(alerp.entry)-1].Term)
+			break
+		case StopServer:
+			stopRequest := ReceiveStopRequest(data1.Value)
+			if stopRequest.name == s.name{
+				s.Stop()
+				return
+			}
 			break
 		}
 
