@@ -74,6 +74,13 @@ func followerLoop(s *server,conn *net.UDPConn) {
 				return
 			}
 			break
+		case DelPeerOrder:
+			dpr := ReceiveDelPeerRequest(data1.Value)
+			_,ok := s.peers[dpr.Name]
+			if ok == true{
+				delete(s.peers,dpr.Name)
+			}
+			break
 		}
 
 		select {

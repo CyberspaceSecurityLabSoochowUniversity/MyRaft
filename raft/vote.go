@@ -124,6 +124,7 @@ func Vote(s *server,vr *VoteRequest)  {
 	if vote == true{
 		s.votedTerm = s.currentTerm
 		s.votedFor = vr.name
+		s.currentTerm += 1
 	}
 	vrp := &VoteResponse{
 		vote: 			vote,

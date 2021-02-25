@@ -122,3 +122,48 @@ func UpdatePeer(peer *Peer,name string,ip string,recPort int,state string,index 
 	peer.heartbeatInterval = heartbeatInterval
 	peer.lastActivity = lastActivity
 }
+
+
+type DelPeerRequest struct {
+	Name              string
+	ip    			  string
+	port  			  int
+}
+
+func NewDelPeerRequest(name string, ip string, port int) *DelPeerRequest {
+	dpr := &DelPeerRequest{
+		Name: 	name,
+		ip: 	ip,
+		port:	port,
+	}
+	return dpr
+}
+
+func SendDelPeerRequest(dpr *DelPeerRequest) {
+	if dpr.ip == ""{
+		fmt.Fprintln(os.Stdout,"SendDelPeerRequest: IP is blank!")
+		return
+	}
+	if dpr.port <= 0{
+		fmt.Fprintln(os.Stdout,"SendDelPeerRequest: Port is incorrect!")
+		return
+	}
+	message,err := json.Marshal(dpr)
+	d := client.Date{Id: DelPeerOrder,Value: message}
+	data,err := json.Marshal(d)
+	if err != nil{
+		fmt.Fprintln(os.Stdout,"SendDelPeerRequest: Error converting data into Json!")
+		return
+	}
+	client.NewClient(dpr.ip,dpr.port,data)
+}
+
+func ReceiveDelPeerRequest(message []byte) *DelPeerRequest {
+	dpr := new(DelPeerRequest)
+	err := json.Unmarshal(message,&dpr)
+	if err != nil{
+		fmt.Fprintln(os.Stdout,"ReceiveDelPeerRequest Error:",err.Error())
+		return nil
+	}
+	return dpr
+}

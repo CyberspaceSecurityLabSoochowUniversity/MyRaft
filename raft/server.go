@@ -1,8 +1,6 @@
 package raft
 
 import (
-	client "../socket/client"
-	"encoding/json"
 	"errors"
 	"fmt"
 	"net"
@@ -359,7 +357,6 @@ func (s *server) loop(conn *net.UDPConn)  {
 		}
 		state = s.State()	//处理完了可能需要改变服务器状态
 	}
-	s.Stop()
 }
 
 
@@ -372,7 +369,6 @@ func (s *server) Start() error {
 		return err
 	}
 	s.SetState(Follower)		//S设置服务器状态为跟随者
-	timeoutChan := afterBetween(s.ElectionTimeout(), s.ElectionTimeout()*2)		//开启选举超时
 
 
 	//此处代码为：启动服务器监听，一旦接收到值则运行相应的代码块
@@ -391,99 +387,17 @@ func (s *server) Start() error {
 
 	s.loop(conn)
 
-	for{
-		data := make([]byte, MaxServerRecLen)
-		_,_,err := conn.ReadFromUDP(data)
-		if err != nil{
-			fmt.Fprintf(os.Stderr,"Server(%s):Read udp content error:%s\n",address,err.Error())
-			continue
-		}
-
-		//这里需要根据接收内容类型进行相应处理
-		data1 := new(client.Date)
-		err = json.Unmarshal(data,&data1)
-		if err != nil{
-			fmt.Fprintln(os.Stdout,"ReceiveData Error:",err.Error())
-			return err
-		}
-
-		switch data1.Id {
-			case AddPeerOrder:
-				apr := ReceiveAddPeerRequest(data1.Value)
-				err = s.AddPeer(apr)
-				if err != nil{
-					fmt.Fprintln(os.Stdout,"Server add peer error:",err.Error())
-				}else{
-					fmt.Fprintln(os.Stdout,"Server add peer success:")
-				}
-				break
-			case VoteOrder:
-				vr := ReceiveVoteVoteRequest(data1.Value)
-				Vote(s,vr)
-				break
-			case VoteBackOrder:
-				if s.state == Candidate{
-					vrp := ReceiveVoteResponse(data1.Value)
-					if vrp.vote == true{
-						s.vote += 1
-						if s.vote >= s.QuorumSize(){
-							s.state = Leader
-							//开始广播心跳
-							s.SetHeartbeatInterval(DefaultHeartbeatInterval)
-							startHeartBeat(s)		//领导者一上线就得广播心跳
-						}
-					}else{
-						s.state = vrp.state
-					}
-				}
-				break
-			case HeartBeatOrder:
-				hb := ReceiveHeartBeat(data1.Value)
-				if hb.logIndex > s.log.LastLogIndex{
-					//向领导者发送一个添加日志请求
-					ale := NewAppendLogEntry(s.name,s.ip,s.recPort,s.log.LastLogIndex,hb.serverIp,hb.serverPort)
-					SendAppendLogEntryRequest(ale)
-				}
-				timeoutChan = afterBetween(s.ElectionTimeout(), s.ElectionTimeout()*2)	//重置选举超时
-				break
-			case AppendLogEntryOrder:
-				ale := ReceiveAppendLogEntryRequest(data1.Value)
-				entry := s.log.entries[ale.logIndex:]
-				alerp := NewAppendLogEntryResponse(s.name,entry,ale.serverIp,ale.serverPort)
-				SendAppendLogEntryResponse(alerp)
-				break
-			case AppendLogEntryResponseOrder:
-				alerp := ReceiveAppendLogEntryResponse(data1.Value)
-				for _,i := range alerp.entry{
-					s.log.entries = append(s.log.entries, i)
-				}
-				break
-		}
-
-		//退出循环事件即指服务器下线或者无法工作
-		if s.state == Stopped{
-			break
-		}
-
-		//还需要考虑选举超时情况，添加对等点情况，发起投票请求情况等等
-		select {
-		case <-timeoutChan:
-			break
-		}
-	}
 	return nil
 }
 
 func (s *server) Stop() {
 	if s.State() == Stopped {		//已关闭过了
 		return
-	} else if s.State() == Follower{
-
-	}else if s.State() == Candidate{
-
-	}else if s.State() == Leader{
-
 	}
+
+	//删除对等点
+	dpr := NewDelPeerRequest(s.name,UdpIp,UdpPort)
+	SendDelPeerRequest(dpr)
 
 	// make sure all goroutines have stopped before we close the log
 	//关闭之前确定所有的日志协程都被关闭了

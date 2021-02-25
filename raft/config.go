@@ -43,6 +43,7 @@ const(
 	AppendLogEntryResponseOrder = "1006"
 	AddLogEntryOrder = "1007"
 	StopServer = "1008"
+	DelPeerOrder = "1009"
 )
 
 //默认广播的地址和端口
