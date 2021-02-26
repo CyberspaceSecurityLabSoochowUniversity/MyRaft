@@ -44,3 +44,44 @@
 
 + 集群中节点主动下线时，除了考虑删除对等点和关闭日志，是否还需要针对不同节点的状态进行不同的关闭操作（Candidate的投票不会再继续收集，Leader的心跳也不会再发送，好像也不太需要其他操作了，可能是我想多了）？
 + 接下来工作的难点：入口节点（元服务器）如何完成代码编写，集群中节点被动下线情况如何解决，日志部分的存储与利用，快照和状态机的实现
+
+---
+
+#### 2021/2/26 星期五
+
+1. 入口节点部分元素和方法设计（不全，以后会陆续补充）
+
+   ```go
+   type entrance struct {i
+   	id              string              //集群的标识
+   	ip 		        string			   //ip
+   	recPort 	    int				  //接收udp消息地址
+   	mutex      	    sync.RWMutex		//读写锁
+   	context         string				//详细信息
+   	currentLeader   string				//当前集群领导者
+   	currentTerm     uint64				//当前集群任期
+   	peer            map[string]string   //集群节点的信息（名称：ip）
+   	pLen            uint64				//集群大小（节点数量）
+   }
+   type Entrance interface {
+   	Id()    			string
+   	Ip()    			string
+   	SetIp(string)
+   	RecPort() 			int
+   	Context() 			string
+   	CurrentLeader() 	string
+   	CurrentTerm()   	uint64
+   	Peer()    			map[string]string
+   	PeerLen() 			uint64
+   	Start()
+   }
+   ```
+
+2. 关于入口节点的一些思考：
+
+   > - 当有Server被New之后想加入集群并启动，必须通过入口节点的允许才可以实现，这个节点发送udp请求给入口节	点，取得入口节点的允许（此时入口节点存储该节点相关信息），入口节点返回一个udp消息，收到后节点才启动并向集群中节点广播添加对等点消息。
+   > - 入口节点接收来自集群中Leader的心跳信息，通过心跳信息就可以知道当前集群中的任期和领导者
+   > - 入口节点可以管理节点让其主动下线，此时只需要广播即可让集群中节点删除对等点，当集群中有节点被动下线入口节点也需要知道，如何才能实现还未考虑清楚？
+   > - 入口节点也可能会产生网络分区的情况，这种情况下该如何解决还未考虑清楚
+   > - 入口节点想要知道当前集群中某个节点的详细的信息，由于入口节点存储节点ip，则可以发送udp请求，让该节点返回一个数据包给入口节点
+   > - 入口节点是否需要存储集群中所有节点的相关配置信息，如果需要如何存储？
