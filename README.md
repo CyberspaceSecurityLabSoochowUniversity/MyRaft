@@ -52,17 +52,18 @@
 1. 入口节点部分元素和方法设计（不全，以后会陆续补充）
 
    ```go
-   type entrance struct {i
+   type entrance struct {
    	id              string              //集群的标识
-   	ip 		        string			   //ip
-   	recPort 	    int				  //接收udp消息地址
-   	mutex      	    sync.RWMutex		//读写锁
-   	context         string				//详细信息
+   	ip 				string				//ip
+   	recPort 		int					//接收udp消息地址
+   	mutex      		sync.RWMutex		//读写锁
+   	context     	string				//详细信息
    	currentLeader   string				//当前集群领导者
    	currentTerm     uint64				//当前集群任期
    	peer            map[string]string   //集群节点的信息（名称：ip）
    	pLen            uint64				//集群大小（节点数量）
    }
+   
    type Entrance interface {
    	Id()    			string
    	Ip()    			string
