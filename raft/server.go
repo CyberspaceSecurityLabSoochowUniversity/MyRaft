@@ -1,6 +1,8 @@
 package raft
 
 import (
+	client "../socket/client"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"net"
@@ -96,7 +98,7 @@ type Server interface {
 	//SnapshotRecoveryRequest(req *SnapshotRecoveryRequest) *SnapshotRecoveryResponse
 
 
-	Init() error
+	Init(ip string,port int) error
 	Start() error
 	Stop()
 	Running() bool
@@ -331,9 +333,63 @@ func (s *server) GetState() string {
 	return fmt.Sprintf("Name: %s, State: %s, Term: %v, CommitedIndex: %v ", s.name, s.state, s.currentTerm, s.log.commitIndex)
 }
 
-func (s *server) Init() error {
+func (s *server) Init(ip string,port int) error {
 	if s.Running() {		//服务器正在运行则返回错误
 		return fmt.Errorf("raft.Server: Server already running[%v]", s.state)
+	}
+
+	if ip == ""{
+		return fmt.Errorf("raft.Server: Entrance id is blank")
+	}
+
+	if port <= 0{
+		return fmt.Errorf("raft.Server: Entrance port is incorrect")
+	}
+
+	address := s.ip + ":" + strconv.Itoa(InitUdpPort)
+	addr,err := net.ResolveUDPAddr("udp",address)
+	if err != nil{
+		fmt.Fprintf(os.Stderr,"Server(%s):New a upd server error:%s\n",address,err.Error())
+		return err
+	}
+	conn,err := net.ListenUDP("udp",addr)
+	if err != nil{
+		fmt.Fprintf(os.Stderr,"Server(%s):New a listenupd error:%s\n",address,err.Error())
+		return err
+	}
+	defer conn.Close()
+
+	jr := NewJoinRequest(s.name,s.ip,InitUdpPort,UdpIp,UdpPort)
+	SendJoinRequest(jr)
+
+	start := false
+
+	for start != true{
+		data := make([]byte, MaxServerRecLen)
+		_, _, err := conn.ReadFromUDP(data)
+		if err != nil {
+			fmt.Fprintf(os.Stderr, "Server(%s):Read udp content error:%s\n", s.ip, err.Error())
+			continue
+		}
+
+		//这里需要根据接收内容类型进行相应处理
+		data1 := new(client.Date)
+		err = json.Unmarshal(data, &data1)
+		if err != nil {
+			fmt.Fprintln(os.Stdout, "ReceiveData Error:", err.Error())
+			return err
+		}
+
+		switch data1.Id {
+		case JoinRaftResponseOrder:
+			jrp := ReceiveJoinResponse(data1.Value)
+			if jrp.join == true{
+				start = true
+			}else{
+				return fmt.Errorf("raft.Server: Entrance not allowed to join the raft")
+			}
+			break
+		}
 	}
 
 	s.state = Initialized		//设置服务器状态为已初始化过了
@@ -365,8 +421,8 @@ func (s *server) Start() error {
 	if s.Running() {
 		return fmt.Errorf("raft.Server: Server already running[%v]", s.state)
 	}
-	if err := s.Init(); err != nil {
-		return err
+	if s.State() != Initialized {
+		return fmt.Errorf("raft.Server: Server is not initialized")
 	}
 	s.SetState(Follower)		//S设置服务器状态为跟随者
 

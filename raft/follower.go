@@ -8,8 +8,6 @@ import (
 	"os"
 )
 
-
-
 func followerLoop(s *server,conn *net.UDPConn) {
 	timeoutChan := afterBetween(s.ElectionTimeout(), s.ElectionTimeout()*2)		//开启选举超时
 	for s.State() == Follower {

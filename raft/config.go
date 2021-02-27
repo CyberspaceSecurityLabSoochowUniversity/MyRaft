@@ -44,10 +44,13 @@ const(
 	AddLogEntryOrder = "1007"
 	StopServer = "1008"
 	DelPeerOrder = "1009"
+	JoinRaftOrder = "1010"
+	JoinRaftResponseOrder = "1011"
 )
 
 //默认广播的地址和端口
 const(
 	UdpIp = "192.168.1.255"
 	UdpPort = 10001
+	InitUdpPort = 10003
 )

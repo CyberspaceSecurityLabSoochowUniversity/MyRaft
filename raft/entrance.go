@@ -1,7 +1,13 @@
 package raft
 
 import (
+	client "../socket/client"
+	"encoding/json"
 	"errors"
+	"fmt"
+	"net"
+	"os"
+	"strconv"
 	"sync"
 )
 
@@ -95,6 +101,69 @@ func (et *entrance) PeerLen() uint64 {
 }
 
 func (et *entrance) Start() {
+	address := et.ip + ":" + strconv.Itoa(et.recPort)
+	addr,err := net.ResolveUDPAddr("udp",address)
+	if err != nil{
+		fmt.Fprintf(os.Stderr,"Entrance(%s):New a upd server error:%s\n",address,err.Error())
+		return
+	}
+	conn,err := net.ListenUDP("udp",addr)
+	if err != nil{
+		fmt.Fprintf(os.Stderr,"Entrance(%s):New a listenupd error:%s\n",address,err.Error())
+		return
+	}
+	defer conn.Close()
+	for{
+		data := make([]byte, MaxServerRecLen)
+		_, _, err := conn.ReadFromUDP(data)
+		if err != nil {
+			fmt.Fprintf(os.Stderr, "Entrance(%s):Read udp content error:%s\n", et.ip, err.Error())
+			continue
+		}
+
+		//这里需要根据接收内容类型进行相应处理
+		data1 := new(client.Date)
+		err = json.Unmarshal(data, &data1)
+		if err != nil {
+			fmt.Fprintln(os.Stdout, "ReceiveData Error:", err.Error())
+			return
+		}
+
+		switch data1.Id {
+		case JoinRaftOrder:
+			jr := ReceiveJoinRequest(data1.Value)
+			var ok bool			//判断名称和ip是否已经存在，存在则为true
+			for key,value := range et.peer{
+				if key == jr.name || value == jr.ip{
+					ok = true
+				}
+			}
+			result := false
+			if !ok {
+				go func() {
+					var a string
+					fmt.Printf("是否让%s 加入集群(y/n)",jr.name+":"+jr.ip)
+					fmt.Scanf("%s",&a)
+					if a == "y"{
+						result = true
+					}
+				}()
+			}else{
+				fmt.Fprintln(os.Stdout,"Server already in Raft")
+			}
+
+			jrp := NewJoinResponse(result,jr.name,jr.sip,jr.recPort)
+			SendJoinResponse(jrp)
+
+			break
+
+		case HeartBeatOrder:
+			hb := ReceiveHeartBeat(data1.Value)
+			et.currentTerm = hb.term
+			et.currentLeader = hb.name
+			break
+		}
+	}
 
 }
 
