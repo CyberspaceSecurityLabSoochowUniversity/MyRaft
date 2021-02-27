@@ -426,6 +426,8 @@ func (s *server) Start() error {
 	}
 	s.SetState(Follower)		//S设置服务器状态为跟随者
 
+	apr := NewAddPeerRequest(s,UdpIp,UdpPort)
+	SendAddPeerRequest(apr)
 
 	//此处代码为：启动服务器监听，一旦接收到值则运行相应的代码块
 	address := s.ip + ":" + strconv.Itoa(s.recPort)

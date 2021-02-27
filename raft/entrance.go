@@ -145,6 +145,7 @@ func (et *entrance) Start() {
 					fmt.Printf("是否让%s 加入集群(y/n)",jr.name+":"+jr.ip)
 					fmt.Scanf("%s",&a)
 					if a == "y"{
+						et.peer[jr.name] = jr.ip
 						result = true
 					}
 				}()
