@@ -22,6 +22,7 @@ type entrance struct {
 	currentTerm     uint64				//当前集群任期
 	peer            map[string]string   //集群节点的信息（名称：ip）
 	pLen            uint64				//集群大小（节点数量）
+	sign            uint64				//存储添加值的次数，同时作为添加的日志条目的唯一标识
 }
 
 type Entrance interface {
@@ -34,6 +35,7 @@ type Entrance interface {
 	CurrentTerm()   	uint64
 	Peer()    			map[string]string
 	PeerLen() 			uint64
+	Sign()              uint64
 	Start()
 }
 
@@ -100,6 +102,12 @@ func (et *entrance) PeerLen() uint64 {
 	return uint64(len(et.peer))
 }
 
+func (et *entrance) Sign() uint64 {
+	et.mutex.RLock()
+	defer et.mutex.RUnlock()
+	return et.sign
+}
+
 func (et *entrance) Start() {
 	address := et.ip + ":" + strconv.Itoa(et.recPort)
 	addr,err := net.ResolveUDPAddr("udp",address)
@@ -162,6 +170,33 @@ func (et *entrance) Start() {
 			hb := ReceiveHeartBeat(data1.Value)
 			et.currentTerm = hb.term
 			et.currentLeader = hb.name
+			break
+		case AddKeyOrder:
+			//客户端发来的添加key/value的请求，这里选择单独发送给leader，后期如果测试丢包则采用广播形式
+			akr := ReceiveAddKeyRequest(data1.Value)
+			if akr.entranceId == et.Id(){
+				et.sign += 1
+				addle := NewAddLogEntry(et.sign,akr.key,akr.value,et.peer[et.currentLeader],UdpPort)
+				SendAddLogEntryRequest(addle)
+			}
+			break
+		case StopServer:
+			stopRequest := ReceiveStopRequest(data1.Value)
+			if stopRequest.entranceId == et.Id(){
+				_,ok := et.peer[stopRequest.name]
+				if ok{
+					stopRequest.ip = et.peer[stopRequest.name]
+					stopRequest.port = UdpPort
+					SendStopRequest(stopRequest)
+				}
+			}
+			break
+		case DelPeerOrder:
+			dpr := ReceiveDelPeerRequest(data1.Value)
+			_,ok := et.peer[dpr.Name]
+			if ok == true{
+				delete(et.peer,dpr.Name)
+			}
 			break
 		}
 	}

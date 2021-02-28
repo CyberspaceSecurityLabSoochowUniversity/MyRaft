@@ -8,13 +8,15 @@ import (
 )
 
 type StopRequest struct {
-	name    string
-	ip   	string
-	port 	int
+	entranceId 	string
+	name    	string
+	ip   		string
+	port 		int
 }
 
-func NewStopRequest(name string,ip string,port int) *StopRequest {
+func NewStopRequest(entranceId string,name string,ip string,port int) *StopRequest {
 	stopRequest := &StopRequest{
+		entranceId: entranceId,
 		name: name,
 		ip:   ip,
 		port: port,

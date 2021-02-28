@@ -152,7 +152,6 @@ func leaderLoop(s *server,conn *net.UDPConn) {
 				delete(s.peers,dpr.Name)
 			}
 			break
-
 		}
 	}
 }

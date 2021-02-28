@@ -30,14 +30,14 @@ func NewLogEntry(l *Log,position int64,index uint64,term uint64,key string,value
 }
 
 type AddLogEntry struct {
-	Sign    string			//添加的日志的唯一标识
+	Sign    uint64			//添加的日志的唯一标识
 	Key 	string
 	Value 	string
 	ip      string
 	port	int
 }
 
-func NewAddLogEntry(sign string,key string,value string,ip string,port int) *AddLogEntry {
+func NewAddLogEntry(sign uint64,key string,value string,ip string,port int) *AddLogEntry {
 	addle := &AddLogEntry{
 		Sign: sign,
 		Key: key,
