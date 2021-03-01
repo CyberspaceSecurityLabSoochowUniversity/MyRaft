@@ -55,39 +55,39 @@ func (p *Peer) setHeartbeatInterval(duration time.Duration) {
 type AddPeerRequest struct {
 	Name              string
 	IP  			  string
-	Port			  int				//接收消息的Port
-	state             string
+	RecPort			  int				//接收消息的Port
+	State             string
 	LastLogIndex      uint64
 	LastLogTerm       uint64
-	heartbeatInterval time.Duration
-	lastActivity      time.Time
+	HeartbeatInterval time.Duration
+	LastActivity      time.Time
 
-	ip    string		//广播的地址
-	port  int			//广播的端口
+	Ip    string		//广播的地址
+	Port  int			//广播的端口
 }
 
 func NewAddPeerRequest(server *server,ip string,port int) *AddPeerRequest {
 	apr := &AddPeerRequest{
 		Name: 					server.name,
 		IP: 					server.ip,
-		Port: 					server.recPort,
-		state: 					server.state,
+		RecPort: 					server.recPort,
+		State: 					server.state,
 		LastLogIndex: 			server.log.LastLogIndex,
 		LastLogTerm: 			server.log.LastLogTerm,
-		heartbeatInterval: 		server.heartbeatInterval,
-		lastActivity: 			time.Now(),
-		ip: 					ip,
-		port:					port,
+		HeartbeatInterval: 		server.heartbeatInterval,
+		LastActivity: 			time.Now(),
+		Ip: 					ip,
+		Port:					port,
 	}
 	return apr
 }
 
 func SendAddPeerRequest(apr *AddPeerRequest) {
-	if apr.ip == ""{
+	if apr.Ip == ""{
 		fmt.Fprintln(os.Stdout,"SendAddPeerRequest: IP is blank!")
 		return
 	}
-	if apr.port <= 0{
+	if apr.Port <= 0{
 		fmt.Fprintln(os.Stdout,"SendAddPeerRequest: Port is incorrect!")
 		return
 	}
@@ -98,7 +98,7 @@ func SendAddPeerRequest(apr *AddPeerRequest) {
 		fmt.Fprintln(os.Stdout,"SendAddPeerRequest: Error converting data into Json!")
 		return
 	}
-	client.NewClient(apr.ip,apr.port,data)
+	client.NewClient(apr.Ip,apr.Port,data)
 }
 
 func ReceiveAddPeerRequest(message []byte) *AddPeerRequest {
@@ -126,25 +126,25 @@ func UpdatePeer(peer *Peer,name string,ip string,recPort int,state string,index 
 
 type DelPeerRequest struct {
 	Name              string
-	ip    			  string
-	port  			  int
+	Ip    			  string
+	Port  			  int
 }
 
 func NewDelPeerRequest(name string, ip string, port int) *DelPeerRequest {
 	dpr := &DelPeerRequest{
 		Name: 	name,
-		ip: 	ip,
-		port:	port,
+		Ip: 	ip,
+		Port:	port,
 	}
 	return dpr
 }
 
 func SendDelPeerRequest(dpr *DelPeerRequest) {
-	if dpr.ip == ""{
+	if dpr.Ip == ""{
 		fmt.Fprintln(os.Stdout,"SendDelPeerRequest: IP is blank!")
 		return
 	}
-	if dpr.port <= 0{
+	if dpr.Port <= 0{
 		fmt.Fprintln(os.Stdout,"SendDelPeerRequest: Port is incorrect!")
 		return
 	}
@@ -155,7 +155,7 @@ func SendDelPeerRequest(dpr *DelPeerRequest) {
 		fmt.Fprintln(os.Stdout,"SendDelPeerRequest: Error converting data into Json!")
 		return
 	}
-	client.NewClient(dpr.ip,dpr.port,data)
+	client.NewClient(dpr.Ip,dpr.Port,data)
 }
 
 func ReceiveDelPeerRequest(message []byte) *DelPeerRequest {
@@ -166,4 +166,98 @@ func ReceiveDelPeerRequest(message []byte) *DelPeerRequest {
 		return nil
 	}
 	return dpr
+}
+
+type GetAllPeersRequest struct {
+	EntranceId  string
+	ClientIp    string
+	ClientPort  int
+	Ip          string
+	Port        int
+}
+
+func NewGetAllPeersRequest(entranceId string,clientIp string,clientPort int,ip string,port int) *GetAllPeersRequest {
+	gapr := &GetAllPeersRequest{
+		EntranceId: entranceId,
+		ClientIp: clientIp,
+		ClientPort: clientPort,
+		Ip: ip,
+		Port: port,
+	}
+	return gapr
+}
+
+func SendGetAllPeersRequest(gapr *GetAllPeersRequest)  {
+	if gapr.Ip == ""{
+		fmt.Fprintln(os.Stdout,"SendGetAllPeersRequest: IP is blank!")
+		return
+	}
+	if gapr.Port <= 0{
+		fmt.Fprintln(os.Stdout,"SendGetAllPeersRequest: Port is incorrect!")
+		return
+	}
+	message,err := json.Marshal(gapr)
+	d := client.Date{Id: GetAllPeersOrder,Value: message}
+	data,err := json.Marshal(d)
+	if err != nil{
+		fmt.Fprintln(os.Stdout,"SendGetAllPeersRequest: Error converting data into Json!")
+		return
+	}
+	client.NewClient(gapr.Ip,gapr.Port,data)
+}
+
+func ReceiveGetAllPeersRequest(message []byte) *GetAllPeersRequest {
+	gapr := new(GetAllPeersRequest)
+	err := json.Unmarshal(message,&gapr)
+	if err != nil{
+		fmt.Fprintln(os.Stdout,"ReceiveGetAllPeersRequest Error:",err.Error())
+		return nil
+	}
+	return gapr
+}
+
+type GetAllPeersResponse struct {
+	EntranceId string
+	Peers map[string]string
+	Ip string
+	Port int
+}
+
+func NewGetAllPeersResponse(entranceId string,peers map[string]string,ip string,port int) *GetAllPeersResponse {
+	gaprp := &GetAllPeersResponse{
+		EntranceId: entranceId,
+		Peers: peers,
+		Ip: ip,
+		Port: port,
+	}
+	return gaprp
+}
+
+func SendGetAllPeersResponse(gaprp *GetAllPeersResponse)  {
+	if gaprp.Ip == ""{
+		fmt.Fprintln(os.Stdout,"SendGetAllPeersResponse: IP is blank!")
+		return
+	}
+	if gaprp.Port <= 0{
+		fmt.Fprintln(os.Stdout,"SendGetAllPeersResponse: Port is incorrect!")
+		return
+	}
+	message,err := json.Marshal(gaprp)
+	d := client.Date{Id: GetAllPeersResponseOrder,Value: message}
+	data,err := json.Marshal(d)
+	if err != nil{
+		fmt.Fprintln(os.Stdout,"SendGetAllPeersResponse: Error converting data into Json!")
+		return
+	}
+	client.NewClient(gaprp.Ip,gaprp.Port,data)
+}
+
+func ReceiveGetAllPeersResponse(message []byte) *GetAllPeersResponse {
+	gaprp := new(GetAllPeersResponse)
+	err := json.Unmarshal(message,&gaprp)
+	if err != nil{
+		fmt.Fprintln(os.Stdout,"ReceiveGetAllPeersResponse Error:",err.Error())
+		return nil
+	}
+	return gaprp
 }

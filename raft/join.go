@@ -8,30 +8,30 @@ import (
 )
 
 type joinRequest struct {
-	name string
-	sip   string
-	recPort int
-	ip string
-	port int
+	Name string
+	Sip   string
+	RecPort int
+	Ip string
+	Port int
 }
 
 func NewJoinRequest(name string,serverIp string,serverPort int,ip string,port int) *joinRequest {
 	jr := &joinRequest{
-		name: name,
-		sip: serverIp,
-		recPort: serverPort,
-		ip: ip,
-		port: port,
+		Name: name,
+		Sip: serverIp,
+		RecPort: serverPort,
+		Ip: ip,
+		Port: port,
 	}
 	return jr
 }
 
 func SendJoinRequest(jr *joinRequest)  {
-	if jr.ip == ""{
+	if jr.Ip == ""{
 		fmt.Fprintln(os.Stdout,"SendJoinRequest: IP is blank!")
 		return
 	}
-	if jr.port <= 0{
+	if jr.Port <= 0{
 		fmt.Fprintln(os.Stdout,"SendJoinRequest: Port is incorrect!")
 		return
 	}
@@ -42,7 +42,7 @@ func SendJoinRequest(jr *joinRequest)  {
 		fmt.Fprintln(os.Stdout,"SendJoinRequest: Error converting data into Json!")
 		return
 	}
-	client.NewClient(jr.ip,jr.port,data)
+	client.NewClient(jr.Ip,jr.Port,data)
 }
 
 func ReceiveJoinRequest(message []byte) *joinRequest {
@@ -56,28 +56,28 @@ func ReceiveJoinRequest(message []byte) *joinRequest {
 }
 
 type joinResponse struct {
-	join   bool
-	name   string
-	ip     string
-	port   int
+	Join   bool
+	Name   string
+	Ip     string
+	Port   int
 }
 
 func NewJoinResponse(join bool,name string,ip string,port int) *joinResponse {
 	jrp := &joinResponse{
-		join: join,
-		name: name,
-		ip: ip,
-		port: port,
+		Join: join,
+		Name: name,
+		Ip: ip,
+		Port: port,
 	}
 	return jrp
 }
 
 func SendJoinResponse(jrp *joinResponse)  {
-	if jrp.ip == ""{
+	if jrp.Ip == ""{
 		fmt.Fprintln(os.Stdout,"SendJoinResponse: IP is blank!")
 		return
 	}
-	if jrp.port <= 0{
+	if jrp.Port <= 0{
 		fmt.Fprintln(os.Stdout,"SendJoinResponse: Port is incorrect!")
 		return
 	}
@@ -88,7 +88,7 @@ func SendJoinResponse(jrp *joinResponse)  {
 		fmt.Fprintln(os.Stdout,"SendJoinResponse: Error converting data into Json!")
 		return
 	}
-	client.NewClient(jrp.ip,jrp.port,data)
+	client.NewClient(jrp.Ip,jrp.Port,data)
 }
 
 func ReceiveJoinResponse(message []byte) *joinResponse {

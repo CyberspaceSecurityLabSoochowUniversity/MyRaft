@@ -47,33 +47,33 @@ func (l *Log) isEmpty() bool {
 
 
 type appendLogEntry struct {
-	name 			string
-	serverIp 		string
-	serverPort 		int
-	logIndex 		uint64
-	ip       		string
-	port     		int
+	Name 			string
+	ServerIp 		string
+	ServerPort 		int
+	LogIndex 		uint64
+	Ip       		string
+	Port     		int
 }
 
 func NewAppendLogEntry(name string,serverIp string,serverPort int,index uint64,
 	ip string,port int) *appendLogEntry {
 	ale := &appendLogEntry{
-		name: name,
-		serverIp: serverIp,
-		serverPort: serverPort,
-		logIndex: index,
-		ip: ip,
-		port: port,
+		Name: name,
+		ServerIp: serverIp,
+		ServerPort: serverPort,
+		LogIndex: index,
+		Ip: ip,
+		Port: port,
 	}
 	return ale
 }
 
 func SendAppendLogEntryRequest(ale *appendLogEntry)  {
-	if ale.ip == ""{
+	if ale.Ip == ""{
 		fmt.Fprintln(os.Stdout,"SendAppendLogEntryRequest: IP is blank!")
 		return
 	}
-	if ale.port <= 0{
+	if ale.Port <= 0{
 		fmt.Fprintln(os.Stdout,"SendAppendLogEntryRequest: Port is incorrect!")
 		return
 	}
@@ -84,7 +84,7 @@ func SendAppendLogEntryRequest(ale *appendLogEntry)  {
 		fmt.Fprintln(os.Stdout,"SendAppendLogEntryRequest: Error converting data into Json!")
 		return
 	}
-	client.NewClient(ale.ip,ale.port,data)
+	client.NewClient(ale.Ip,ale.Port,data)
 }
 
 func ReceiveAppendLogEntryRequest(message []byte) *appendLogEntry {
@@ -98,28 +98,28 @@ func ReceiveAppendLogEntryRequest(message []byte) *appendLogEntry {
 }
 
 type appendLogEntryResponse struct {
-	name string
-	entry []LogEntry
-	ip string
-	port int
+	Name string
+	Entry []LogEntry
+	Ip string
+	Port int
 }
 
 func NewAppendLogEntryResponse(name string,entry []LogEntry,ip string,port int) *appendLogEntryResponse {
 	alerp := &appendLogEntryResponse{
-		name: name,
-		entry: entry,
-		ip: ip,
-		port: port,
+		Name: name,
+		Entry: entry,
+		Ip: ip,
+		Port: port,
 	}
 	return alerp
 }
 
 func SendAppendLogEntryResponse(alerp *appendLogEntryResponse)  {
-	if alerp.ip == ""{
+	if alerp.Ip == ""{
 		fmt.Fprintln(os.Stdout,"SendAppendLogEntryResponse: IP is blank!")
 		return
 	}
-	if alerp.port <= 0{
+	if alerp.Port <= 0{
 		fmt.Fprintln(os.Stdout,"SendAppendLogEntryResponse: Port is incorrect!")
 		return
 	}
@@ -130,7 +130,7 @@ func SendAppendLogEntryResponse(alerp *appendLogEntryResponse)  {
 		fmt.Fprintln(os.Stdout,"SendAppendLogEntryResponse: Error converting data into Json!")
 		return
 	}
-	client.NewClient(alerp.ip,alerp.port,data)
+	client.NewClient(alerp.Ip,alerp.Port,data)
 }
 
 func ReceiveAppendLogEntryResponse(message []byte) *appendLogEntryResponse {

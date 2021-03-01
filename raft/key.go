@@ -8,30 +8,30 @@ import (
 )
 
 type AddKeyRequest struct {
-	entranceId  string		//客户端决定发送给哪个入口节点
-	key 		string
-	value 		string
-	ip          string
-	port        int
+	EntranceId  string		//客户端决定发送给哪个入口节点
+	Key 		string
+	Value 		string
+	Ip          string
+	Port        int
 }
 
 func NewAddKeyRequest(entranceId string,key string,value string,ip string,port int) *AddKeyRequest {
 	akr := &AddKeyRequest{
-		entranceId: entranceId,
-		key: key,
-		value: value,
-		ip: ip,
-		port: port,
+		EntranceId: entranceId,
+		Key: key,
+		Value: value,
+		Ip: ip,
+		Port: port,
 	}
 	return akr
 }
 
 func SendAddKeyRequest(akr *AddKeyRequest)  {
-	if akr.ip == ""{
+	if akr.Ip == ""{
 		fmt.Fprintln(os.Stdout,"SendAddKeyRequest: IP is blank!")
 		return
 	}
-	if akr.port <= 0{
+	if akr.Port <= 0{
 		fmt.Fprintln(os.Stdout,"SendAddKeyRequest: Port is incorrect!")
 		return
 	}
@@ -42,7 +42,7 @@ func SendAddKeyRequest(akr *AddKeyRequest)  {
 		fmt.Fprintln(os.Stdout,"SendAddKeyRequest: Error converting data into Json!")
 		return
 	}
-	client.NewClient(akr.ip,akr.port,data)
+	client.NewClient(akr.Ip,akr.Port,data)
 }
 
 func ReceiveAddKeyRequest(message []byte) *AddKeyRequest {

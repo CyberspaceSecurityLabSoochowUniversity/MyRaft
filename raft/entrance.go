@@ -2,6 +2,7 @@ package raft
 
 import (
 	client "../socket/client"
+	"bytes"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -109,6 +110,9 @@ func (et *entrance) Sign() uint64 {
 }
 
 func (et *entrance) Start() {
+
+	fmt.Printf("old et1 currentLeader:%s、currentTerm:%d.\n",et.CurrentLeader(),et.CurrentTerm())
+
 	address := et.ip + ":" + strconv.Itoa(et.recPort)
 	addr,err := net.ResolveUDPAddr("udp",address)
 	if err != nil{
@@ -121,6 +125,10 @@ func (et *entrance) Start() {
 		return
 	}
 	defer conn.Close()
+
+	hb := NewHeartBeat("server1",2,"192.168.1.101",UdpPort,6,2,UdpIp,UdpPort)
+	SendHeartBeat(hb)
+
 	for{
 		data := make([]byte, MaxServerRecLen)
 		_, _, err := conn.ReadFromUDP(data)
@@ -128,6 +136,7 @@ func (et *entrance) Start() {
 			fmt.Fprintf(os.Stderr, "Entrance(%s):Read udp content error:%s\n", et.ip, err.Error())
 			continue
 		}
+		data = bytes.Trim(data,"\x00")
 
 		//这里需要根据接收内容类型进行相应处理
 		data1 := new(client.Date)
@@ -142,7 +151,7 @@ func (et *entrance) Start() {
 			jr := ReceiveJoinRequest(data1.Value)
 			var ok bool			//判断名称和ip是否已经存在，存在则为true
 			for key,value := range et.peer{
-				if key == jr.name || value == jr.ip{
+				if key == jr.Name || value == jr.Ip{
 					ok = true
 				}
 			}
@@ -150,10 +159,10 @@ func (et *entrance) Start() {
 			if !ok {
 				go func() {
 					var a string
-					fmt.Printf("是否让%s 加入集群(y/n)",jr.name+":"+jr.ip)
+					fmt.Printf("是否让%s 加入集群(y/n)",jr.Name+":"+jr.Ip)
 					fmt.Scanf("%s",&a)
 					if a == "y"{
-						et.peer[jr.name] = jr.ip
+						et.peer[jr.Name] = jr.Ip
 						result = true
 					}
 				}()
@@ -161,32 +170,35 @@ func (et *entrance) Start() {
 				fmt.Fprintln(os.Stdout,"Server already in Raft")
 			}
 
-			jrp := NewJoinResponse(result,jr.name,jr.sip,jr.recPort)
+			jrp := NewJoinResponse(result,jr.Name,jr.Sip,jr.RecPort)
 			SendJoinResponse(jrp)
 
 			break
 
 		case HeartBeatOrder:
 			hb := ReceiveHeartBeat(data1.Value)
-			et.currentTerm = hb.term
-			et.currentLeader = hb.name
+			et.currentTerm = hb.Term
+			et.currentLeader = hb.Name
+
+			fmt.Printf("new et1 currentLeader:%s、currentTerm:%d.",et.CurrentLeader(),et.CurrentTerm())
+
 			break
 		case AddKeyOrder:
 			//客户端发来的添加key/value的请求，这里选择单独发送给leader，后期如果测试丢包则采用广播形式
 			akr := ReceiveAddKeyRequest(data1.Value)
-			if akr.entranceId == et.Id(){
+			if akr.EntranceId == et.Id(){
 				et.sign += 1
-				addle := NewAddLogEntry(et.sign,akr.key,akr.value,et.peer[et.currentLeader],UdpPort)
+				addle := NewAddLogEntry(et.sign,akr.Key,akr.Value,et.peer[et.currentLeader],UdpPort)
 				SendAddLogEntryRequest(addle)
 			}
 			break
 		case StopServer:
 			stopRequest := ReceiveStopRequest(data1.Value)
-			if stopRequest.entranceId == et.Id(){
-				_,ok := et.peer[stopRequest.name]
+			if stopRequest.EntranceId == et.Id(){
+				_,ok := et.peer[stopRequest.Name]
 				if ok{
-					stopRequest.ip = et.peer[stopRequest.name]
-					stopRequest.port = UdpPort
+					stopRequest.Ip = et.peer[stopRequest.Name]
+					stopRequest.Port = UdpPort
 					SendStopRequest(stopRequest)
 				}
 			}
@@ -196,6 +208,14 @@ func (et *entrance) Start() {
 			_,ok := et.peer[dpr.Name]
 			if ok == true{
 				delete(et.peer,dpr.Name)
+			}
+			break
+
+		case GetAllPeersOrder:
+			gapr := ReceiveGetAllPeersRequest(data1.Value)
+			if gapr.EntranceId == et.Id(){
+				gaprp := NewGetAllPeersResponse(et.Id(),et.peer,gapr.ClientIp,gapr.ClientPort)
+				SendGetAllPeersResponse(gaprp)
 			}
 			break
 		}

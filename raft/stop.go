@@ -8,28 +8,28 @@ import (
 )
 
 type StopRequest struct {
-	entranceId 	string
-	name    	string
-	ip   		string
-	port 		int
+	EntranceId 	string
+	Name    	string
+	Ip   		string
+	Port 		int
 }
 
 func NewStopRequest(entranceId string,name string,ip string,port int) *StopRequest {
 	stopRequest := &StopRequest{
-		entranceId: entranceId,
-		name: name,
-		ip:   ip,
-		port: port,
+		EntranceId: entranceId,
+		Name: name,
+		Ip:   ip,
+		Port: port,
 	}
 	return stopRequest
 }
 
 func SendStopRequest(stopRequest *StopRequest)  {
-	if stopRequest.ip == ""{
+	if stopRequest.Ip == ""{
 		fmt.Fprintln(os.Stdout,"SendStopRequest: IP is blank!")
 		return
 	}
-	if stopRequest.port <= 0{
+	if stopRequest.Port <= 0{
 		fmt.Fprintln(os.Stdout,"SendStopRequest: Port is incorrect!")
 		return
 	}
@@ -40,7 +40,7 @@ func SendStopRequest(stopRequest *StopRequest)  {
 		fmt.Fprintln(os.Stdout,"SendStopRequest: Error converting data into Json!")
 		return
 	}
-	client.NewClient(stopRequest.ip,stopRequest.port,data)
+	client.NewClient(stopRequest.Ip,stopRequest.Port,data)
 }
 
 func ReceiveStopRequest(message []byte) *StopRequest {

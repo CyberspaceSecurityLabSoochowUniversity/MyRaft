@@ -8,14 +8,14 @@ import (
 )
 
 type VoteRequest struct {
-	name            string
-	serverIp	    string					//服务器ip
-	serverPort		int						//服务器接收数据端口
-	term 			uint64
-	lastLogIndex   	uint64
-	lastLogTerm 	uint64
-	ip              string					//广播地址
-	port			int						//广播端口
+	Name            string
+	ServerIp	    string					//服务器ip
+	ServerPort		int						//服务器接收数据端口
+	Term 			uint64
+	LastLogIndex   	uint64
+	LastLogTerm 	uint64
+	Ip              string					//广播地址
+	Port			int						//广播端口
 }
 
 func NewVoteRequest(s *server,ip string,port int) *VoteRequest {
@@ -24,24 +24,24 @@ func NewVoteRequest(s *server,ip string,port int) *VoteRequest {
 		return nil
 	}
 	vr := &VoteRequest{
-		name: 					s.name,
-		serverIp: 				s.ip,
-		serverPort: 			s.recPort,
-		term: 					s.Term(),
-		lastLogIndex: 			s.log.LastLogIndex,
-		lastLogTerm: 			s.log.LastLogTerm,
-		ip: 					ip,
-		port: 					port,
+		Name: 					s.name,
+		ServerIp: 				s.ip,
+		ServerPort: 			s.recPort,
+		Term: 					s.Term(),
+		LastLogIndex: 			s.log.LastLogIndex,
+		LastLogTerm: 			s.log.LastLogTerm,
+		Ip: 					ip,
+		Port: 					port,
 	}
 	return vr
 }
 
 func SendVoteRequest(vr *VoteRequest)  {
-	if vr.ip == ""{
+	if vr.Ip == ""{
 		fmt.Fprintln(os.Stdout,"VoteRequest: IP is blank!")
 		return
 	}
-	if vr.port <= 0{
+	if vr.Port <= 0{
 		fmt.Fprintln(os.Stdout,"VoteRequest: Port is incorrect!")
 		return
 	}
@@ -52,7 +52,7 @@ func SendVoteRequest(vr *VoteRequest)  {
 		fmt.Fprintln(os.Stdout,"VoteRequest: Error converting data into Json!")
 		return
 	}
-	client.NewClient(vr.ip,vr.port,data)
+	client.NewClient(vr.Ip,vr.Port,data)
 }
 
 func ReceiveVoteVoteRequest(message []byte) *VoteRequest {
@@ -66,19 +66,19 @@ func ReceiveVoteVoteRequest(message []byte) *VoteRequest {
 }
 
 type VoteResponse struct {
-	vote            bool
-	name            string
-	state			string
-	ip              string
-	port			int
+	Vote            bool
+	Name            string
+	State			string
+	Ip              string
+	Port			int
 }
 
 func SendVoteResponse(vrp *VoteResponse)  {
-	if vrp.ip == ""{
+	if vrp.Ip == ""{
 		fmt.Fprintln(os.Stdout,"VoteResponse: IP is blank!")
 		return
 	}
-	if vrp.port <= 0{
+	if vrp.Port <= 0{
 		fmt.Fprintln(os.Stdout,"VoteResponse: Port is incorrect!")
 		return
 	}
@@ -89,7 +89,7 @@ func SendVoteResponse(vrp *VoteResponse)  {
 		fmt.Fprintln(os.Stdout,"VoteResponse: Error converting data into Json!")
 		return
 	}
-	client.NewClient(vrp.ip,vrp.port,data)
+	client.NewClient(vrp.Ip,vrp.Port,data)
 }
 
 func ReceiveVoteResponse(message []byte) *VoteResponse {
@@ -110,7 +110,7 @@ func Vote(s *server,vr *VoteRequest)  {
 	}
 	state := Candidate
 	vote := true
-	if s.log.LastLogTerm > vr.lastLogTerm || s.log.LastLogIndex > vr.lastLogIndex || s.Term() > vr.term{
+	if s.log.LastLogTerm > vr.LastLogTerm || s.log.LastLogIndex > vr.LastLogIndex || s.Term() > vr.Term{
 		state = Follower
 		vote = false
 	}else if s.state == Candidate{
@@ -119,23 +119,23 @@ func Vote(s *server,vr *VoteRequest)  {
 		state = Follower
 		vote = false
 	}else{
-		s.votedFor = vr.name
+		s.votedFor = vr.Name
 	}
 	if vote == true{
 		s.votedTerm = s.currentTerm
-		s.votedFor = vr.name
+		s.votedFor = vr.Name
 		s.currentTerm += 1
 	}
 	vrp := &VoteResponse{
-		vote: 			vote,
-		name: 			s.name,
-		state:          state,
-		ip: 			vr.serverIp,
-		port: 			vr.serverPort,
+		Vote: 			vote,
+		Name: 			s.name,
+		State:          state,
+		Ip: 			vr.ServerIp,
+		Port: 			vr.ServerPort,
 	}
 	SendVoteResponse(vrp)
 
-	peer := s.peers[vr.name]
-	UpdatePeer(peer,peer.Name,peer.IP,peer.Port,state,vr.lastLogIndex,
-		vr.lastLogTerm,peer.heartbeatInterval,peer.lastActivity)
+	peer := s.peers[vr.Name]
+	UpdatePeer(peer,peer.Name,peer.IP,peer.Port,state,vr.LastLogIndex,
+		vr.LastLogTerm,peer.heartbeatInterval,peer.lastActivity)
 }

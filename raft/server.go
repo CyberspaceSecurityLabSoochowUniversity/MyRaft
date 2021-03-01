@@ -2,6 +2,7 @@ package raft
 
 import (
 	client "../socket/client"
+	"bytes"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -251,8 +252,8 @@ func (s *server) AddPeer(request *AddPeerRequest) error {
 		return nil
 	}
 	if s.name != request.Name {
-		peer := NewPeer(request.Name,request.IP,request.Port,request.state,request.LastLogIndex,
-			request.LastLogTerm,request.heartbeatInterval,request.lastActivity)
+		peer := NewPeer(request.Name,request.IP,request.RecPort,request.State,request.LastLogIndex,
+			request.LastLogTerm,request.HeartbeatInterval,request.LastActivity)
 		s.peers[peer.Name] = peer		//添加对等点
 	}
 	return nil
@@ -371,6 +372,7 @@ func (s *server) Init(ip string,port int) error {
 			fmt.Fprintf(os.Stderr, "Server(%s):Read udp content error:%s\n", s.ip, err.Error())
 			continue
 		}
+		data = bytes.Trim(data,"\x00")
 
 		//这里需要根据接收内容类型进行相应处理
 		data1 := new(client.Date)
@@ -383,7 +385,7 @@ func (s *server) Init(ip string,port int) error {
 		switch data1.Id {
 		case JoinRaftResponseOrder:
 			jrp := ReceiveJoinResponse(data1.Value)
-			if jrp.join == true{
+			if jrp.Join == true{
 				start = true
 			}else{
 				return fmt.Errorf("raft.Server: Entrance not allowed to join the raft")

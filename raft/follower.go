@@ -2,6 +2,7 @@ package raft
 
 import (
 	client "../socket/client"
+	"bytes"
 	"encoding/json"
 	"fmt"
 	"net"
@@ -18,6 +19,7 @@ func followerLoop(s *server,conn *net.UDPConn) {
 			fmt.Fprintf(os.Stderr, "Server(%s):Read udp content error:%s\n", s.ip, err.Error())
 			continue
 		}
+		data = bytes.Trim(data,"\x00")
 
 		//这里需要根据接收内容类型进行相应处理
 		data1 := new(client.Date)
@@ -45,11 +47,11 @@ func followerLoop(s *server,conn *net.UDPConn) {
 			break
 		case HeartBeatOrder:
 			hb := ReceiveHeartBeat(data1.Value)
-			s.currentTerm = hb.term
-			s.leader = hb.name
-			if hb.logIndex > s.log.LastLogIndex{
+			s.currentTerm = hb.Term
+			s.leader = hb.Name
+			if hb.LogIndex > s.log.LastLogIndex{
 				//向领导者发送一个添加日志请求
-				ale := NewAppendLogEntry(s.name,s.ip,s.recPort,s.log.LastLogIndex,hb.serverIp,hb.serverPort)
+				ale := NewAppendLogEntry(s.name,s.ip,s.recPort,s.log.LastLogIndex,hb.ServerIp,hb.ServerPort)
 				SendAppendLogEntryRequest(ale)
 			}
 
@@ -59,15 +61,15 @@ func followerLoop(s *server,conn *net.UDPConn) {
 			break
 		case AppendLogEntryResponseOrder:
 			alerp := ReceiveAppendLogEntryResponse(data1.Value)
-			for _,i := range alerp.entry{
+			for _,i := range alerp.Entry{
 				s.log.entries = append(s.log.entries, i)
 			}
-			s.log.LastLogIndex += uint64(len(alerp.entry))
-			s.log.LastLogTerm = uint64(alerp.entry[len(alerp.entry)-1].Term)
+			s.log.LastLogIndex += uint64(len(alerp.Entry))
+			s.log.LastLogTerm = uint64(alerp.Entry[len(alerp.Entry)-1].Term)
 			break
 		case StopServer:
 			stopRequest := ReceiveStopRequest(data1.Value)
-			if stopRequest.name == s.name{
+			if stopRequest.Name == s.name{
 				s.Stop()
 				return
 			}

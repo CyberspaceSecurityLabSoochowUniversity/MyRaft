@@ -33,8 +33,8 @@ type AddLogEntry struct {
 	Sign    uint64			//添加的日志的唯一标识
 	Key 	string
 	Value 	string
-	ip      string
-	port	int
+	Ip      string
+	Port	int
 }
 
 func NewAddLogEntry(sign uint64,key string,value string,ip string,port int) *AddLogEntry {
@@ -42,18 +42,18 @@ func NewAddLogEntry(sign uint64,key string,value string,ip string,port int) *Add
 		Sign: sign,
 		Key: key,
 		Value: value,
-		ip: ip,
-		port: port,
+		Ip: ip,
+		Port: port,
 	}
 	return addle
 }
 
 func SendAddLogEntryRequest(addle *AddLogEntry)  {
-	if addle.ip == ""{
+	if addle.Ip == ""{
 		fmt.Fprintln(os.Stdout,"SendAddLogEntryRequest: IP is blank!")
 		return
 	}
-	if addle.port <= 0{
+	if addle.Port <= 0{
 		fmt.Fprintln(os.Stdout,"SendAddLogEntryRequest: Port is incorrect!")
 		return
 	}
@@ -68,7 +68,7 @@ func SendAddLogEntryRequest(addle *AddLogEntry)  {
 		fmt.Fprintln(os.Stdout,"SendAddLogEntryRequest: Error converting data into Json!")
 		return
 	}
-	client.NewClient(addle.ip,addle.port,data)
+	client.NewClient(addle.Ip,addle.Port,data)
 }
 
 func ReceiveAddLogEntryRequest(message []byte) *AddLogEntry {

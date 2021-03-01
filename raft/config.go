@@ -47,6 +47,8 @@ const(
 	JoinRaftOrder = "1010"
 	JoinRaftResponseOrder = "1011"
 	AddKeyOrder = "1012"
+	GetAllPeersOrder = "1013"
+	GetAllPeersResponseOrder = "1014"
 )
 
 //默认广播的地址和端口

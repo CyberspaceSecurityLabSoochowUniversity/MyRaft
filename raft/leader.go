@@ -2,6 +2,7 @@ package raft
 
 import (
 	client "../socket/client"
+	"bytes"
 	"encoding/json"
 	"fmt"
 	"net"
@@ -10,27 +11,27 @@ import (
 )
 
 type heartBeat struct {
-	name 		string
-	term 		uint64
-	serverIp  	string
-	serverPort 	int
-	logIndex 	uint64
-	logTerm 	uint64
-	ip 			string
-	port        int
+	Name 		string
+	Term 		uint64
+	ServerIp  	string
+	ServerPort 	int
+	LogIndex 	uint64
+	LogTerm 	uint64
+	Ip 			string
+	Port        int
 }
 
 func NewHeartBeat(name string,term uint64,serverIp string,serverPort int,
 	logIndex uint64,logTerm uint64,ip string,port int) *heartBeat {
 	hb := &heartBeat{
-		name: 					name,
-		term: 					term,
-		serverIp: 				serverIp,
-		serverPort: 			serverPort,
-		logIndex: 				logIndex,
-		logTerm: 				logTerm,
-		ip: 					ip,
-		port: 					port,
+		Name: 					name,
+		Term: 					term,
+		ServerIp: 				serverIp,
+		ServerPort: 			serverPort,
+		LogIndex: 				logIndex,
+		LogTerm: 				logTerm,
+		Ip: 					ip,
+		Port: 					port,
 	}
 	return hb
 }
@@ -60,11 +61,11 @@ func heartBeatFunc(s *server) {
 
 
 func SendHeartBeat(hb *heartBeat)  {
-	if hb.ip == ""{
+	if hb.Ip == ""{
 		fmt.Fprintln(os.Stdout,"SendHeartBeat: IP is blank!")
 		return
 	}
-	if hb.port <= 0{
+	if hb.Port <= 0{
 		fmt.Fprintln(os.Stdout,"SendHeartBeat: Port is incorrect!")
 		return
 	}
@@ -75,12 +76,13 @@ func SendHeartBeat(hb *heartBeat)  {
 		fmt.Fprintln(os.Stdout,"SendHeartBeat: Error converting data into Json!")
 		return
 	}
-	client.NewClient(hb.ip,hb.port,data)
+	client.NewClient(hb.Ip,hb.Port,data)
 }
 
 func ReceiveHeartBeat(message []byte) *heartBeat {
 	hb := new(heartBeat)
 	err := json.Unmarshal(message,&hb)
+	fmt.Println(hb)
 	if err != nil{
 		fmt.Fprintln(os.Stdout,"ReceiveHeartBeat Error:",err.Error())
 		return nil
@@ -98,6 +100,7 @@ func leaderLoop(s *server,conn *net.UDPConn) {
 			fmt.Fprintf(os.Stderr, "Server(%s):Read udp content error:%s\n", s.ip, err.Error())
 			continue
 		}
+		data = bytes.Trim(data,"\x00")
 
 		//这里需要根据接收内容类型进行相应处理
 		data1 := new(client.Date)
@@ -120,8 +123,8 @@ func leaderLoop(s *server,conn *net.UDPConn) {
 			break
 		case AppendLogEntryOrder:
 			ale := ReceiveAppendLogEntryRequest(data1.Value)
-			entry := s.log.entries[ale.logIndex:]
-			alerp := NewAppendLogEntryResponse(s.name,entry,ale.serverIp,ale.serverPort)
+			entry := s.log.entries[ale.LogIndex:]
+			alerp := NewAppendLogEntryResponse(s.name,entry,ale.ServerIp,ale.ServerPort)
 			SendAppendLogEntryResponse(alerp)
 			break
 		case VoteOrder:
@@ -140,7 +143,7 @@ func leaderLoop(s *server,conn *net.UDPConn) {
 			break
 		case StopServer:
 			stopRequest := ReceiveStopRequest(data1.Value)
-			if stopRequest.name == s.name{
+			if stopRequest.Name == s.name{
 				s.Stop()
 				return
 			}
