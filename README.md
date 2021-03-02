@@ -163,3 +163,6 @@
 ![GetServer.jpg.png](https://i.loli.net/2021/03/02/gt5rZVhAUGiNYvW.png)
 
 + 客户端需要知道所有入口节点的ip和port，否则无法与集群建立连接
+
+---
+
