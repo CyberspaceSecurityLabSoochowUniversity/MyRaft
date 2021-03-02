@@ -183,6 +183,7 @@ func (et *entrance) Start() {
 			fmt.Printf("new et1 currentLeader:%s、currentTerm:%d.",et.CurrentLeader(),et.CurrentTerm())
 
 			break
+
 		case AddKeyOrder:
 			//客户端发来的添加key/value的请求，这里选择单独发送给leader，后期如果测试丢包则采用广播形式
 			akr := ReceiveAddKeyRequest(data1.Value)
@@ -192,6 +193,7 @@ func (et *entrance) Start() {
 				SendAddLogEntryRequest(addle)
 			}
 			break
+
 		case StopServer:
 			stopRequest := ReceiveStopRequest(data1.Value)
 			if stopRequest.EntranceId == et.Id(){
@@ -203,6 +205,7 @@ func (et *entrance) Start() {
 				}
 			}
 			break
+
 		case DelPeerOrder:
 			dpr := ReceiveDelPeerRequest(data1.Value)
 			_,ok := et.peer[dpr.Name]
@@ -217,6 +220,23 @@ func (et *entrance) Start() {
 				gaprp := NewGetAllPeersResponse(et.Id(),et.peer,gapr.ClientIp,gapr.ClientPort)
 				SendGetAllPeersResponse(gaprp)
 			}
+			break
+
+		case GetOneServerOrder:
+			gsr := ReceiveGetServerRequest(data1.Value)
+			if gsr.EntranceId == et.Id(){
+				gsr.EntranceId = et.Ip()
+				gsr.EntrancePort = et.RecPort()
+				gsr.Ip = et.peer[gsr.Name]
+				gsr.Port = UdpPort
+				SendGetServerRequest(gsr)
+			}
+			break
+		case GetOneServerResponseOrder:
+			gsrp := ReceiveGetServerResponse(data1.Value)
+			gsrp.Ip =gsrp.ClientIp
+			gsrp.Port = gsrp.ClientPort
+			SendGetServerResponse(gsrp)
 			break
 		}
 	}

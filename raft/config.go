@@ -49,6 +49,8 @@ const(
 	AddKeyOrder = "1012"
 	GetAllPeersOrder = "1013"
 	GetAllPeersResponseOrder = "1014"
+	GetOneServerOrder = "1015"
+	GetOneServerResponseOrder = "1016"
 )
 
 //默认广播的地址和端口

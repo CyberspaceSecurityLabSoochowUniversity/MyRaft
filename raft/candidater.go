@@ -102,6 +102,13 @@ func candidateLoop(s *server,conn *net.UDPConn) {
 				delete(s.peers,dpr.Name)
 			}
 			break
+		case GetOneServerOrder:
+			gsr := ReceiveGetServerRequest(data1.Value)
+			if gsr.Name == s.Name(){
+				gsrp := NewGetServerResponse(s,gsr.ClientIp,gsr.ClientPort,gsr.EntranceId,gsr.EntrancePort)
+				SendGetServerResponse(gsrp)
+			}
+			break
 		}
 
 		select {

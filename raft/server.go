@@ -484,5 +484,125 @@ func (s *server) promotable() bool {
 	return s.log.LastLogIndex > 0
 }
 
+type GetServerRequest struct {
+	EntranceId string
+	Name string
+	EntranceIp string
+	EntrancePort int
+	ClientIp string
+	ClientPort int
+	Ip string
+	Port int
+}
 
+func NewGetServerRequest(entranceId string,clientIp string,clientPort int,name string,
+	ip string,port int) *GetServerRequest {
+	gsr := &GetServerRequest{
+		EntranceId: entranceId,
+		Name: name,
+		ClientIp: clientIp,
+		ClientPort: clientPort,
+		Ip: ip,
+		Port: port,
+	}
+	return gsr
+}
 
+func SendGetServerRequest(gsr * GetServerRequest)  {
+	if gsr.Ip == ""{
+		fmt.Fprintln(os.Stdout,"SendGetServerRequest: IP is blank!")
+		return
+	}
+	if gsr.Port <= 0{
+		fmt.Fprintln(os.Stdout,"SendGetServerRequest: Port is incorrect!")
+		return
+	}
+	message,err := json.Marshal(gsr)
+	d := client.Date{Id: GetOneServerOrder,Value: message}
+	data,err := json.Marshal(d)
+	if err != nil{
+		fmt.Fprintln(os.Stdout,"SendGetServerRequest: Error converting data into Json!")
+		return
+	}
+	client.NewClient(gsr.Ip,gsr.Port,data)
+}
+func ReceiveGetServerRequest(message []byte) *GetServerRequest {
+	gsr := new(GetServerRequest)
+	err := json.Unmarshal(message,&gsr)
+	if err != nil{
+		fmt.Fprintln(os.Stdout,"ReceiveGetServerRequest Error:",err.Error())
+		return nil
+	}
+	return gsr
+}
+
+type GetServerResponse struct {
+	Name string
+	Path string
+	ServerIp string
+	State string
+	RecPort int
+	Context string
+	CurrentTerm uint64
+	VoteTerm uint64
+	VoteFor string
+	Leader  string
+	ElectionTimeout time.Duration
+	HeartBeatInterval time.Duration
+	MaxLogEntriesPerRequest uint64
+	ClientIp string
+	ClientPort int
+	Ip string
+	Port int
+}
+
+func NewGetServerResponse(s *server,clientIp string,clientPort int,ip string,port int) *GetServerResponse {
+	gsrp := &GetServerResponse{
+		Name: s.Name(),
+		Path: s.Path(),
+		ServerIp: s.Ip(),
+		State: s.State(),
+		RecPort: s.RecPort(),
+		Context: s.Context(),
+		CurrentTerm: s.Term(),
+		VoteTerm: s.VotedTerm(),
+		VoteFor: s.VoteFor(),
+		Leader: s.Leader(),
+		ElectionTimeout: s.ElectionTimeout(),
+		HeartBeatInterval: s.HeartbeatInterval(),
+		MaxLogEntriesPerRequest: s.maxLogEntriesPerRequest,
+		ClientIp: clientIp,
+		ClientPort: clientPort,
+		Ip: ip,
+		Port: port,
+	}
+	return gsrp
+}
+
+func SendGetServerResponse(gsrp *GetServerResponse)  {
+	if gsrp.Ip == ""{
+		fmt.Fprintln(os.Stdout,"SendGetServerResponse: IP is blank!")
+		return
+	}
+	if gsrp.Port <= 0{
+		fmt.Fprintln(os.Stdout,"SendGetServerResponse: Port is incorrect!")
+		return
+	}
+	message,err := json.Marshal(gsrp)
+	d := client.Date{Id: GetOneServerResponseOrder,Value: message}
+	data,err := json.Marshal(d)
+	if err != nil{
+		fmt.Fprintln(os.Stdout,"SendGetServerResponse: Error converting data into Json!")
+		return
+	}
+	client.NewClient(gsrp.Ip,gsrp.Port,data)
+}
+func ReceiveGetServerResponse(message []byte) *GetServerResponse {
+	gsrp := new(GetServerResponse)
+	err := json.Unmarshal(message,&gsrp)
+	if err != nil{
+		fmt.Fprintln(os.Stdout,"ReceiveGetServerResponse Error:",err.Error())
+		return nil
+	}
+	return gsrp
+}

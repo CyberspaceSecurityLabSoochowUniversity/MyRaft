@@ -91,6 +91,7 @@ func ReceiveHeartBeat(message []byte) *heartBeat {
 }
 
 func leaderLoop(s *server,conn *net.UDPConn) {
+	s.leader = s.name
 	s.SetHeartbeatInterval(DefaultHeartbeatInterval)
 	startHeartBeat(s)		//领导者一上线就得广播心跳
 	for s.State() == Leader {
@@ -153,6 +154,13 @@ func leaderLoop(s *server,conn *net.UDPConn) {
 			_,ok := s.peers[dpr.Name]
 			if ok == true{
 				delete(s.peers,dpr.Name)
+			}
+			break
+		case GetOneServerOrder:
+			gsr := ReceiveGetServerRequest(data1.Value)
+			if gsr.Name == s.Name(){
+				gsrp := NewGetServerResponse(s,gsr.ClientIp,gsr.ClientPort,gsr.EntranceId,gsr.EntrancePort)
+				SendGetServerResponse(gsrp)
 			}
 			break
 		}
