@@ -138,6 +138,8 @@ func leaderLoop(s *server,conn *net.UDPConn) {
 			value := addle.Value
 			logEntry := NewLogEntry(s.log,0, s.log.LastLogIndex+1, s.currentTerm,key,value)
 			s.log.entries = append(s.log.entries, *logEntry)
+			s.log.LastLogIndex += 1
+			s.log.LastLogTerm = s.Term()
 
 			//将日志条目持久化log文件中
 

@@ -9,4 +9,3 @@ type StateMachine struct {
 	path        string
 }
 
-

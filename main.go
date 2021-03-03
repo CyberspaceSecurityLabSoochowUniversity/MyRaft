@@ -13,8 +13,20 @@ func main()  {
 		fmt.Fprintln(os.Stderr,"NewEntrance Error")
 		return
 	}
-	et.Start()
+	go func() {
+		et.Start()
+	}()
 
-
-
+	s1,err := raft.NewServer("s1","../tmp","first server","192.168.1.1",10010,raft.UdpPort,nil)
+	if err != nil{
+		return
+	}
+	err = s1.Init("192.168.1.100",raft.UdpPort)
+	if err != nil{
+		return
+	}
+	err = s1.Start()
+	if err != nil{
+		return
+	}
 }

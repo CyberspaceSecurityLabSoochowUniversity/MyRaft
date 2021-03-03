@@ -360,7 +360,7 @@ func (s *server) Init(ip string,port int) error {
 	}
 	defer conn.Close()
 
-	jr := NewJoinRequest(s.name,s.ip,InitUdpPort,UdpIp,UdpPort)
+	jr := NewJoinRequest(s.name,s.ip,InitUdpPort,ip,port)
 	SendJoinRequest(jr)
 
 	start := false
