@@ -82,7 +82,6 @@ func SendHeartBeat(hb *heartBeat)  {
 func ReceiveHeartBeat(message []byte) *heartBeat {
 	hb := new(heartBeat)
 	err := json.Unmarshal(message,&hb)
-	fmt.Println(hb)
 	if err != nil{
 		fmt.Fprintln(os.Stdout,"ReceiveHeartBeat Error:",err.Error())
 		return nil

@@ -395,7 +395,7 @@ func (s *server) Init(ip string,port int) error {
 			break
 		}
 	}
-
+	s.log.LastLogIndex = 1
 	s.state = Initialized		//设置服务器状态为已初始化过了
 	return nil
 }

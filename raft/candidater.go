@@ -14,6 +14,10 @@ func candidateLoop(s *server,conn *net.UDPConn) {
 	timeoutChan := afterBetween(s.ElectionTimeout(), s.ElectionTimeout()*2)
 	//此处需要定义投票超时时间
 	for s.State() == Candidate {
+		if s.vote >= s.QuorumSize(){
+			s.SetState(Leader)
+			return
+		}
 		//循环发起发起投票请求，以防有些节点出现丢包情况和有新节点加入集群的情况
 		vr := NewVoteRequest(s,UdpIp,UdpPort)
 		SendVoteRequest(vr)
@@ -60,10 +64,10 @@ func candidateLoop(s *server,conn *net.UDPConn) {
 				vrp := ReceiveVoteResponse(data1.Value)
 				if vrp.Vote == true{
 					s.vote += 1
-					if s.vote >= s.QuorumSize(){
-						s.SetState(Leader)
-						return
-					}
+					//if s.vote >= s.QuorumSize(){
+					//	s.SetState(Leader)
+					//	return
+					//}
 				}else{
 					if vrp.State != Candidate{
 						s.state = vrp.State

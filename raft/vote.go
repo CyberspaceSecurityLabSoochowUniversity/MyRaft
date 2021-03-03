@@ -103,6 +103,9 @@ func ReceiveVoteResponse(message []byte) *VoteResponse {
 }
 
 func Vote(s *server,vr *VoteRequest)  {
+	if s.name == vr.Name{
+		return
+	}
 	s.mutex.RLock()
 	defer s.mutex.RUnlock()
 	if s.VotedTerm() == s.Term(){

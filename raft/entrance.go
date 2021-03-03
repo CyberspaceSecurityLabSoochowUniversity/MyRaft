@@ -145,17 +145,18 @@ func (et *entrance) Start() {
 		switch data1.Id {
 		case JoinRaftOrder:
 			jr := ReceiveJoinRequest(data1.Value)
-			var ok bool			//判断名称和ip是否已经存在，存在则为true
-			for key,value := range et.peer{
-				if key == jr.Name || value == jr.Ip{
-					ok = true
-				}
-			}
 			go func() {
+				var ok bool			//判断名称和ip是否已经存在，存在则为true
+				ok = false
+				for key,value := range et.peer{
+					if key == jr.Name || value == jr.Sip{
+						ok = true
+					}
+				}
 				result := false
 				if !ok {
 					var a string
-					fmt.Printf("是否让%s 加入集群(y/n)",jr.Name+":"+jr.Ip)
+					fmt.Printf("是否让%s 加入集群(y/n)",jr.Name+":"+jr.Sip)
 					fmt.Scanf("%s",&a)
 					if a == "y"{
 						et.peer[jr.Name] = jr.Ip
