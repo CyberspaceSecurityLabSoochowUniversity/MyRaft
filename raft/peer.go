@@ -70,7 +70,7 @@ func NewAddPeerRequest(server *server,ip string,port int) *AddPeerRequest {
 	apr := &AddPeerRequest{
 		Name: 					server.name,
 		IP: 					server.ip,
-		RecPort: 					server.recPort,
+		RecPort: 				server.recPort,
 		State: 					server.state,
 		LastLogIndex: 			server.log.LastLogIndex,
 		LastLogTerm: 			server.log.LastLogTerm,
@@ -109,6 +109,65 @@ func ReceiveAddPeerRequest(message []byte) *AddPeerRequest {
 		return nil
 	}
 	return apr
+}
+
+type AddPeerResponse struct {
+	Name              string
+	IP  			  string
+	RecPort			  int				//接收消息的Port
+	State             string
+	LastLogIndex      uint64
+	LastLogTerm       uint64
+	HeartbeatInterval time.Duration
+	LastActivity      time.Time
+
+	Ip    string		//广播的地址
+	Port  int			//广播的端口
+}
+
+func NewAddPeerResponse(server *server,ip string,port int) *AddPeerResponse {
+	aprp := &AddPeerResponse{
+		Name: 					server.name,
+		IP: 					server.ip,
+		RecPort: 				server.recPort,
+		State: 					server.state,
+		LastLogIndex: 			server.log.LastLogIndex,
+		LastLogTerm: 			server.log.LastLogTerm,
+		HeartbeatInterval: 		server.heartbeatInterval,
+		LastActivity: 			time.Now(),
+		Ip: 					ip,
+		Port:					port,
+	}
+	return aprp
+}
+
+func SendAddPeerResponse(aprp *AddPeerResponse) {
+	if aprp.Ip == ""{
+		fmt.Fprintln(os.Stdout,"SendAddPeerResponse: IP is blank!")
+		return
+	}
+	if aprp.Port <= 0{
+		fmt.Fprintln(os.Stdout,"SendAddPeerResponse: Port is incorrect!")
+		return
+	}
+	message,err := json.Marshal(aprp)
+	d := client.Date{Id: AddPeerResponseOrder,Value: message}
+	data,err := json.Marshal(d)
+	if err != nil{
+		fmt.Fprintln(os.Stdout,"SendAddPeerResponse: Error converting data into Json!")
+		return
+	}
+	client.NewClient(aprp.Ip,aprp.Port,data)
+}
+
+func ReceiveAddPeerResponse(message []byte) *AddPeerResponse {
+	aprp := new(AddPeerResponse)
+	err := json.Unmarshal(message,&aprp)
+	if err != nil{
+		fmt.Fprintln(os.Stdout,"ReceiveAddPeerResponse Error:",err.Error())
+		return nil
+	}
+	return aprp
 }
 
 func UpdatePeer(peer *Peer,name string,ip string,recPort int,state string,index uint64,

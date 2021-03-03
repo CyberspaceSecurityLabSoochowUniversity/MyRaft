@@ -249,12 +249,14 @@ func (s *server) Peers() map[string]*Peer {
 
 func (s *server) AddPeer(request *AddPeerRequest) error {
 	if s.peers[request.Name] != nil {
-		return nil
+		return fmt.Errorf("peer already in raft")
 	}
 	if s.name != request.Name {
 		peer := NewPeer(request.Name,request.IP,request.RecPort,request.State,request.LastLogIndex,
 			request.LastLogTerm,request.HeartbeatInterval,request.LastActivity)
 		s.peers[peer.Name] = peer		//添加对等点
+		apr1 := NewAddPeerResponse(s,request.IP,request.Port)
+		SendAddPeerResponse(apr1)
 	}
 	return nil
 }

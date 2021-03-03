@@ -17,7 +17,7 @@ const (
 const (
 	MaxLogEntriesPerRequest         = 2000
 	NumberOfLogEntriesAfterSnapshot = 200
-	MaxServerRecLen = 240
+	MaxServerRecLen = 2400
 )
 
 const (
@@ -51,6 +51,7 @@ const(
 	GetAllPeersResponseOrder = "1014"
 	GetOneServerOrder = "1015"
 	GetOneServerResponseOrder = "1016"
+	AddPeerResponseOrder = "1017"
 )
 
 //默认广播的地址和端口

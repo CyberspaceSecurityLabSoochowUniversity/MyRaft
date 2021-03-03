@@ -40,11 +40,16 @@ func candidateLoop(s *server,conn *net.UDPConn) {
 			err = s.AddPeer(apr)
 			if err != nil {
 				fmt.Fprintln(os.Stdout, "Server add peer error:", err.Error())
-			} else {
-				fmt.Fprintln(os.Stdout, "Server add peer success:")
 			}
-			apr1 := NewAddPeerRequest(s,apr.IP,apr.Port)
-			SendAddPeerRequest(apr1)
+			break
+		case AddPeerResponseOrder:
+			aprp := ReceiveAddPeerResponse(data1.Value)
+			_,ok := s.peers[aprp.Name]
+			if !ok{
+				peer := NewPeer(aprp.Name,aprp.IP,aprp.RecPort,aprp.State,aprp.LastLogIndex,
+					aprp.LastLogTerm,aprp.HeartbeatInterval,aprp.LastActivity)
+				s.peers[peer.Name] = peer		//添加对等点
+			}
 			break
 		case VoteOrder:
 			vr := ReceiveVoteVoteRequest(data1.Value)

@@ -55,6 +55,7 @@ func NewEntrance(id string,ip string,port int,ct string) (error,Entrance) {
 		ip: ip,
 		recPort: port,
 		context: ct,
+		peer: make(map[string]string),
 	}
 	return nil,et
 }
@@ -111,8 +112,6 @@ func (et *entrance) Sign() uint64 {
 
 func (et *entrance) Start() {
 
-	fmt.Printf("old et1 currentLeader:%s、currentTerm:%d.\n",et.CurrentLeader(),et.CurrentTerm())
-
 	address := et.ip + ":" + strconv.Itoa(et.recPort)
 	addr,err := net.ResolveUDPAddr("udp",address)
 	if err != nil{
@@ -125,9 +124,6 @@ func (et *entrance) Start() {
 		return
 	}
 	defer conn.Close()
-
-	hb := NewHeartBeat("server1",2,"192.168.1.101",UdpPort,6,2,UdpIp,UdpPort)
-	SendHeartBeat(hb)
 
 	for{
 		data := make([]byte, MaxServerRecLen)
@@ -155,9 +151,9 @@ func (et *entrance) Start() {
 					ok = true
 				}
 			}
-			result := false
-			if !ok {
-				go func() {
+			go func() {
+				result := false
+				if !ok {
 					var a string
 					fmt.Printf("是否让%s 加入集群(y/n)",jr.Name+":"+jr.Ip)
 					fmt.Scanf("%s",&a)
@@ -165,22 +161,19 @@ func (et *entrance) Start() {
 						et.peer[jr.Name] = jr.Ip
 						result = true
 					}
-				}()
-			}else{
-				fmt.Fprintln(os.Stdout,"Server already in Raft")
-			}
+				}else{
+					fmt.Fprintln(os.Stdout,"Server already in Raft")
+				}
 
-			jrp := NewJoinResponse(result,jr.Name,jr.Sip,jr.RecPort)
-			SendJoinResponse(jrp)
-
+				jrp := NewJoinResponse(result,jr.Name,jr.Sip,jr.RecPort)
+				SendJoinResponse(jrp)
+			}()
 			break
 
 		case HeartBeatOrder:
 			hb := ReceiveHeartBeat(data1.Value)
 			et.currentTerm = hb.Term
 			et.currentLeader = hb.Name
-
-			fmt.Printf("new et1 currentLeader:%s、currentTerm:%d.",et.CurrentLeader(),et.CurrentTerm())
 
 			break
 
