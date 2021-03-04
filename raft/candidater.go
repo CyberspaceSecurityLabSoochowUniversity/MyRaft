@@ -118,6 +118,11 @@ func candidateLoop(s *server,conn *net.UDPConn) {
 				SendGetServerResponse(gsrp)
 			}
 			break
+		case MonitorRequestOrder:
+			mr := ReceiveMonitorRequest(data1.Value)
+			mrp := NewMonitorResponse(s.Name(),mr.EntranceIp,mr.EntranceRecPort)
+			SendMonitorResponse(mrp)
+			break
 		}
 
 		select {

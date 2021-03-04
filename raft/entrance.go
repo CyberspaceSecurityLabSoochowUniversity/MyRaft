@@ -10,6 +10,7 @@ import (
 	"os"
 	"strconv"
 	"sync"
+	"time"
 )
 
 //入口节点（元服务器）
@@ -24,6 +25,7 @@ type entrance struct {
 	peer            map[string]string   //集群节点的信息（名称：ip）
 	pLen            uint64				//集群大小（节点数量）
 	sign            uint64				//存储添加值的次数，同时作为添加的日志条目的唯一标识
+	monitorTimeout  time.Duration		//检测节点下线的时间间隔
 }
 
 type Entrance interface {
@@ -37,6 +39,7 @@ type Entrance interface {
 	Peer()    			map[string]string
 	PeerLen() 			uint64
 	Sign()              uint64
+	MonitorTimeout()    time.Duration
 	Start()
 }
 
@@ -56,6 +59,7 @@ func NewEntrance(id string,ip string,port int,ct string) (error,Entrance) {
 		recPort: port,
 		context: ct,
 		peer: make(map[string]string),
+		monitorTimeout: DefaultMonitorTimeout,
 	}
 	return nil,et
 }
@@ -110,8 +114,15 @@ func (et *entrance) Sign() uint64 {
 	return et.sign
 }
 
-func (et *entrance) Start() {
+func (et *entrance) MonitorTimeout() time.Duration {
+	et.mutex.RLock()
+	defer et.mutex.RUnlock()
+	return et.monitorTimeout
+}
 
+func (et *entrance) Start() {
+	timeoutChan := afterBetween(et.MonitorTimeout(),et.MonitorTimeout()*2)
+	peer1 := make(map[string]string)
 	address := et.ip + ":" + strconv.Itoa(et.recPort)
 	addr,err := net.ResolveUDPAddr("udp",address)
 	if err != nil{
@@ -124,6 +135,8 @@ func (et *entrance) Start() {
 		return
 	}
 	defer conn.Close()
+
+	fmt.Printf("Entrance:%s Start\n",et.Id())
 
 	for{
 		data := make([]byte, MaxServerRecLen)
@@ -159,7 +172,7 @@ func (et *entrance) Start() {
 					fmt.Printf("是否让%s 加入集群(y/n)",jr.Name+":"+jr.Sip)
 					fmt.Scanf("%s",&a)
 					if a == "y"{
-						et.peer[jr.Name] = jr.Ip
+						et.peer[jr.Name] = jr.Sip
 						result = true
 					}
 				}else{
@@ -232,6 +245,28 @@ func (et *entrance) Start() {
 			gsrp.Port = gsrp.ClientPort
 			SendGetServerResponse(gsrp)
 			break
+		case MonitorResponseOrder:
+			mrp := ReceiveMonitorResponse(data1.Value)
+			_,ok := peer1[mrp.Name]
+			if ok{
+				delete(peer1,mrp.Name)
+			}
+			break
+		}
+
+		select {
+		case <-timeoutChan:
+			if len(peer1) != 0{
+				for name,_ := range peer1{
+					dpr := NewDelPeerRequest(name,UdpIp,UdpPort)
+					SendDelPeerRequest(dpr)
+					delete(et.peer,name)
+				}
+			}
+			peer1 = et.peer
+			mr := NewMonitorRequest(et.Ip(),et.RecPort(),UdpIp,UdpPort)
+			SendMonitorRequest(mr)
+			timeoutChan = afterBetween(et.MonitorTimeout(),et.MonitorTimeout()*2)
 		}
 	}
 

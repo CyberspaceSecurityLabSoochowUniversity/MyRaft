@@ -61,7 +61,7 @@ func followerLoop(s *server,conn *net.UDPConn) {
 			}
 
 			//此处是否需要考虑领导者节点日志索引小于其他一些节点的情况？如果考虑则需要让所有节点与领导者保持一致
-
+			<- timeoutChan
 			timeoutChan = afterBetween(s.ElectionTimeout(), s.ElectionTimeout()*2)	//重置选举超时
 			break
 		case AppendLogEntryResponseOrder:
@@ -92,6 +92,11 @@ func followerLoop(s *server,conn *net.UDPConn) {
 				gsrp := NewGetServerResponse(s,gsr.ClientIp,gsr.ClientPort,gsr.EntranceId,gsr.EntrancePort)
 				SendGetServerResponse(gsrp)
 			}
+			break
+		case MonitorRequestOrder:
+			mr := ReceiveMonitorRequest(data1.Value)
+			mrp := NewMonitorResponse(s.Name(),mr.EntranceIp,mr.EntranceRecPort)
+			SendMonitorResponse(mrp)
 			break
 		}
 

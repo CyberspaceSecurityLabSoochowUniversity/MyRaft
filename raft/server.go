@@ -408,18 +408,19 @@ func (s *server) loop(conn *net.UDPConn)  {
 		switch state {		//四种状态对应四种处理方式
 		case Follower:
 			followerLoop(s,conn)
+			break
 		case Candidate:
 			candidateLoop(s,conn)
+			break
 		case Leader:
 			leaderLoop(s,conn)
+			break
 		//case Snapshotting:
 		//	snapshotLoop(s,conn)
 		}
 		state = s.State()	//处理完了可能需要改变服务器状态
 	}
 }
-
-
 
 func (s *server) Start() error {
 	if s.Running() {

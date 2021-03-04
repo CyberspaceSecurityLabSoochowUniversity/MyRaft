@@ -23,6 +23,7 @@ const (
 const (
 	DefaultHeartbeatInterval = 50 * time.Millisecond
 	DefaultElectionTimeout = 150 * time.Millisecond
+	DefaultMonitorTimeout = 450 * time.Millisecond
 )
 
 const ElectionTimeoutThresholdPercent = 0.8
@@ -52,6 +53,8 @@ const(
 	GetOneServerOrder = "1015"
 	GetOneServerResponseOrder = "1016"
 	AddPeerResponseOrder = "1017"
+	MonitorRequestOrder = "1018"
+	MonitorResponseOrder = "1019"
 )
 
 //默认广播的地址和端口

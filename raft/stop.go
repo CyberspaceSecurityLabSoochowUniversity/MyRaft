@@ -53,3 +53,92 @@ func ReceiveStopRequest(message []byte) *StopRequest {
 	return stopRequest
 }
 
+type MonitorRequest struct {
+	EntranceIp string
+	EntranceRecPort int
+	Ip string
+	Port int
+}
+
+func NewMonitorRequest(entranceIp string,entrancePort int,ip string,port int) *MonitorRequest {
+	mr := &MonitorRequest{
+		EntranceIp: entranceIp,
+		EntranceRecPort: entrancePort,
+		Ip: ip,
+		Port: port,
+	}
+	return mr
+}
+
+func SendMonitorRequest(mr *MonitorRequest)  {
+	if mr.Ip == ""{
+		fmt.Fprintln(os.Stdout,"SendMonitorRequest: IP is blank!")
+		return
+	}
+	if mr.Port <= 0{
+		fmt.Fprintln(os.Stdout,"SendMonitorRequest: Port is incorrect!")
+		return
+	}
+	message,err := json.Marshal(mr)
+	d := client.Date{Id: MonitorRequestOrder,Value: message}
+	data,err := json.Marshal(d)
+	if err != nil{
+		fmt.Fprintln(os.Stdout,"SendMonitorRequest: Error converting data into Json!")
+		return
+	}
+	client.NewClient(mr.Ip,mr.Port,data)
+}
+
+func ReceiveMonitorRequest(message []byte) *MonitorRequest {
+	mr := new(MonitorRequest)
+	err := json.Unmarshal(message,&mr)
+	if err != nil{
+		fmt.Fprintln(os.Stdout,"ReceiveMonitorRequest Error:",err.Error())
+		return nil
+	}
+	return mr
+}
+
+type MonitorResponse struct {
+	Name string
+	Ip string
+	Port int
+}
+
+func NewMonitorResponse(name string,ip string,port int) *MonitorResponse {
+	mrp := &MonitorResponse{
+		Name: name,
+		Ip: ip,
+		Port: port,
+	}
+	return mrp
+}
+
+func SendMonitorResponse(mrp *MonitorResponse)  {
+	if mrp.Ip == ""{
+		fmt.Fprintln(os.Stdout,"SendMonitorResponse: IP is blank!")
+		return
+	}
+	if mrp.Port <= 0{
+		fmt.Fprintln(os.Stdout,"SendMonitorResponse: Port is incorrect!")
+		return
+	}
+	message,err := json.Marshal(mrp)
+	d := client.Date{Id: MonitorResponseOrder,Value: message}
+	data,err := json.Marshal(d)
+	if err != nil{
+		fmt.Fprintln(os.Stdout,"SendMonitorResponse: Error converting data into Json!")
+		return
+	}
+	client.NewClient(mrp.Ip,mrp.Port,data)
+}
+
+func ReceiveMonitorResponse(message []byte) *MonitorResponse {
+	mrp := new(MonitorResponse)
+	err := json.Unmarshal(message,&mrp)
+	if err != nil{
+		fmt.Fprintln(os.Stdout,"ReceiveMonitorResponse Error:",err.Error())
+		return nil
+	}
+	return mrp
+}
