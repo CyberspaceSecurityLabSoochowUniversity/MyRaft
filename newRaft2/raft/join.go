@@ -43,6 +43,7 @@ func SendJoinRequest(jr *joinRequest)  {
 		fmt.Fprintln(os.Stdout,"SendJoinRequest: Error converting data into Json!")
 		return
 	}
+
 	client.NewClient(jr.Ip,jr.Port,data)
 }
 

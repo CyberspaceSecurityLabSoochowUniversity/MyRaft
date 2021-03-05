@@ -52,6 +52,7 @@ func SendVoteRequest(vr *VoteRequest)  {
 		fmt.Fprintln(os.Stdout,"VoteRequest: Error converting data into Json!")
 		return
 	}
+
 	client.NewClient(vr.Ip,vr.Port,data)
 }
 
@@ -89,6 +90,7 @@ func SendVoteResponse(vrp *VoteResponse)  {
 		fmt.Fprintln(os.Stdout,"VoteResponse: Error converting data into Json!")
 		return
 	}
+
 	client.NewClient(vrp.Ip,vrp.Port,data)
 }
 

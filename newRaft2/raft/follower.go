@@ -110,6 +110,8 @@ func followerLoop(s *server,conn *net.UDPConn) {
 				mrp := NewMonitorResponse(s.Name(),mr.EntranceIp,mr.EntranceRecPort)
 				SendMonitorResponse(mrp)
 				break
+			default:
+				break
 			}
 		}
 	}()

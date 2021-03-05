@@ -107,7 +107,6 @@ func leaderLoop(s *server,conn *net.UDPConn) {
 				return
 			}
 			data = bytes.Trim(data,"\x00")
-
 			//这里需要根据接收内容类型进行相应处理
 			data1 := new(client.Date)
 			err = json.Unmarshal(data, &data1)
@@ -183,6 +182,7 @@ func leaderLoop(s *server,conn *net.UDPConn) {
 			}
 		}
 	}()
+
 	for s.State() == Leader {
 
 	}
