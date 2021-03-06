@@ -207,5 +207,7 @@
 
 今日组会 整理资料
 
+![raft基本架构.jpg.png](https://i.loli.net/2021/03/06/xvGtsS3IHkl6NjP.png)
+
 ---
 
