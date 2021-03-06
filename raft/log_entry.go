@@ -68,6 +68,10 @@ func SendAddLogEntryRequest(addle *AddLogEntry)  {
 		fmt.Fprintln(os.Stdout,"SendAddLogEntryRequest: Error converting data into Json!")
 		return
 	}
+	//for i:=0;i<3;i++{
+	//	client.NewClient(addle.Ip,addle.Port,data)
+	//	time.Sleep(22*time.Millisecond)
+	//}
 	client.NewClient(addle.Ip,addle.Port,data)
 }
 

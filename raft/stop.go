@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"os"
+	"time"
 )
 
 type StopRequest struct {
@@ -36,11 +37,17 @@ func SendStopRequest(stopRequest *StopRequest)  {
 	message,err := json.Marshal(stopRequest)
 	d := client.Date{Id: StopServer,Value: message}
 	data,err := json.Marshal(d)
-	if err != nil{
-		fmt.Fprintln(os.Stdout,"SendStopRequest: Error converting data into Json!")
+	if err != nil {
+		fmt.Fprintln(os.Stdout, "SendStopRequest: Error converting data into Json!")
 		return
 	}
-	client.NewClient(stopRequest.Ip,stopRequest.Port,data)
+
+	go func() {
+		for i:=0;i<3;i++{
+			client.NewClient(stopRequest.Ip,stopRequest.Port,data)
+			time.Sleep(50*time.Millisecond)
+		}
+	}()
 }
 
 func ReceiveStopRequest(message []byte) *StopRequest {
@@ -86,7 +93,13 @@ func SendMonitorRequest(mr *MonitorRequest)  {
 		fmt.Fprintln(os.Stdout,"SendMonitorRequest: Error converting data into Json!")
 		return
 	}
-	client.NewClient(mr.Ip,mr.Port,data)
+
+	go func() {
+		for i:=0;i<3;i++{
+			client.NewClient(mr.Ip,mr.Port,data)
+			time.Sleep(50*time.Millisecond)
+		}
+	}()
 }
 
 func ReceiveMonitorRequest(message []byte) *MonitorRequest {
@@ -130,6 +143,14 @@ func SendMonitorResponse(mrp *MonitorResponse)  {
 		fmt.Fprintln(os.Stdout,"SendMonitorResponse: Error converting data into Json!")
 		return
 	}
+
+	//go func() {
+	//	for i:=0;i<3;i++{
+	//		client.NewClient(mrp.Ip,mrp.Port,data)
+	//		time.Sleep(10*time.Millisecond)
+	//	}
+	//}()
+
 	client.NewClient(mrp.Ip,mrp.Port,data)
 }
 

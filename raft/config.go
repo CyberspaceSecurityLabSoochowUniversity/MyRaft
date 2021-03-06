@@ -17,13 +17,13 @@ const (
 const (
 	MaxLogEntriesPerRequest         = 2000
 	NumberOfLogEntriesAfterSnapshot = 200
-	MaxServerRecLen = 2400
+	MaxServerRecLen = 1000
 )
 
 const (
 	DefaultHeartbeatInterval = 50 * time.Millisecond
 	DefaultElectionTimeout = 150 * time.Millisecond
-	DefaultMonitorTimeout = 450 * time.Millisecond
+	DefaultMonitorTimeout = 150 * time.Millisecond
 )
 
 const ElectionTimeoutThresholdPercent = 0.8

@@ -98,7 +98,13 @@ func SendAddPeerRequest(apr *AddPeerRequest) {
 		fmt.Fprintln(os.Stdout,"SendAddPeerRequest: Error converting data into Json!")
 		return
 	}
-	client.NewClient(apr.Ip,apr.Port,data)
+	go func() {
+		for i:=0;i<3;i++{
+			client.NewClient(apr.Ip,apr.Port,data)
+			time.Sleep(15*time.Millisecond)
+		}
+	}()
+
 }
 
 func ReceiveAddPeerRequest(message []byte) *AddPeerRequest {
@@ -157,7 +163,13 @@ func SendAddPeerResponse(aprp *AddPeerResponse) {
 		fmt.Fprintln(os.Stdout,"SendAddPeerResponse: Error converting data into Json!")
 		return
 	}
-	client.NewClient(aprp.Ip,aprp.Port,data)
+
+	go func() {
+		for i:=0;i<3;i++{
+			client.NewClient(aprp.Ip,aprp.Port,data)
+			time.Sleep(20*time.Millisecond)
+		}
+	}()
 }
 
 func ReceiveAddPeerResponse(message []byte) *AddPeerResponse {
@@ -214,7 +226,12 @@ func SendDelPeerRequest(dpr *DelPeerRequest) {
 		fmt.Fprintln(os.Stdout,"SendDelPeerRequest: Error converting data into Json!")
 		return
 	}
-	client.NewClient(dpr.Ip,dpr.Port,data)
+	go func() {
+		for i:=0;i<3;i++{
+			client.NewClient(dpr.Ip,dpr.Port,data)
+			time.Sleep(17*time.Millisecond)
+		}
+	}()
 }
 
 func ReceiveDelPeerRequest(message []byte) *DelPeerRequest {
@@ -262,7 +279,11 @@ func SendGetAllPeersRequest(gapr *GetAllPeersRequest)  {
 		fmt.Fprintln(os.Stdout,"SendGetAllPeersRequest: Error converting data into Json!")
 		return
 	}
-	client.NewClient(gapr.Ip,gapr.Port,data)
+	for i:=0;i<3;i++{
+		client.NewClient(gapr.Ip,gapr.Port,data)
+		time.Sleep(20*time.Millisecond)
+	}
+
 }
 
 func ReceiveGetAllPeersRequest(message []byte) *GetAllPeersRequest {
@@ -308,6 +329,10 @@ func SendGetAllPeersResponse(gaprp *GetAllPeersResponse)  {
 		fmt.Fprintln(os.Stdout,"SendGetAllPeersResponse: Error converting data into Json!")
 		return
 	}
+	//for i:=0;i<3;i++{
+	//	client.NewClient(gaprp.Ip,gaprp.Port,data)
+	//	time.Sleep(25*time.Millisecond)
+	//}
 	client.NewClient(gaprp.Ip,gaprp.Port,data)
 }
 

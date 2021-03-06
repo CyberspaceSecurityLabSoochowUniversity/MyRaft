@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"os"
+	"time"
 )
 
 type joinRequest struct {
@@ -42,6 +43,7 @@ func SendJoinRequest(jr *joinRequest)  {
 		fmt.Fprintln(os.Stdout,"SendJoinRequest: Error converting data into Json!")
 		return
 	}
+
 	client.NewClient(jr.Ip,jr.Port,data)
 }
 
@@ -88,7 +90,11 @@ func SendJoinResponse(jrp *joinResponse)  {
 		fmt.Fprintln(os.Stdout,"SendJoinResponse: Error converting data into Json!")
 		return
 	}
-	client.NewClient(jrp.Ip,jrp.Port,data)
+	for i:=0;i<3;i++{
+		client.NewClient(jrp.Ip,jrp.Port,data)
+		time.Sleep(25*time.Millisecond)
+	}
+
 }
 
 func ReceiveJoinResponse(message []byte) *joinResponse {

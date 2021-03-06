@@ -7,6 +7,7 @@ import (
 	"os"
 	"path"
 	"sync"
+	"time"
 )
 
 type Log struct {
@@ -84,7 +85,13 @@ func SendAppendLogEntryRequest(ale *appendLogEntry)  {
 		fmt.Fprintln(os.Stdout,"SendAppendLogEntryRequest: Error converting data into Json!")
 		return
 	}
-	client.NewClient(ale.Ip,ale.Port,data)
+
+	go func() {
+		for i:=0;i<3;i++{
+			client.NewClient(ale.Ip,ale.Port,data)
+			time.Sleep(20*time.Millisecond)
+		}
+	}()
 }
 
 func ReceiveAppendLogEntryRequest(message []byte) *appendLogEntry {
@@ -130,6 +137,10 @@ func SendAppendLogEntryResponse(alerp *appendLogEntryResponse)  {
 		fmt.Fprintln(os.Stdout,"SendAppendLogEntryResponse: Error converting data into Json!")
 		return
 	}
+	//for i:=0;i<3;i++{
+	//	client.NewClient(alerp.Ip,alerp.Port,data)
+	//	time.Sleep(20*time.Millisecond)
+	//}
 	client.NewClient(alerp.Ip,alerp.Port,data)
 }
 

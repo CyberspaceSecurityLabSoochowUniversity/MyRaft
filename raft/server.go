@@ -252,11 +252,14 @@ func (s *server) AddPeer(request *AddPeerRequest) error {
 		return fmt.Errorf("peer already in raft")
 	}
 	if s.name != request.Name {
-		peer := NewPeer(request.Name,request.IP,request.RecPort,request.State,request.LastLogIndex,
-			request.LastLogTerm,request.HeartbeatInterval,request.LastActivity)
-		s.peers[peer.Name] = peer		//添加对等点
-		apr1 := NewAddPeerResponse(s,request.IP,request.Port)
-		SendAddPeerResponse(apr1)
+		_,ok := s.peers[request.Name]
+		if !ok{
+			peer := NewPeer(request.Name,request.IP,request.RecPort,request.State,request.LastLogIndex,
+				request.LastLogTerm,request.HeartbeatInterval,request.LastActivity)
+			s.peers[peer.Name] = peer		//添加对等点
+			apr1 := NewAddPeerResponse(s,request.IP,request.Port)
+			SendAddPeerResponse(apr1)
+		}
 	}
 	return nil
 }
@@ -366,7 +369,6 @@ func (s *server) Init(ip string,port int) error {
 	SendJoinRequest(jr)
 
 	start := false
-
 	for start != true{
 		data := make([]byte, MaxServerRecLen)
 		_, _, err := conn.ReadFromUDP(data)
@@ -527,7 +529,13 @@ func SendGetServerRequest(gsr * GetServerRequest)  {
 		fmt.Fprintln(os.Stdout,"SendGetServerRequest: Error converting data into Json!")
 		return
 	}
-	client.NewClient(gsr.Ip,gsr.Port,data)
+
+	go func() {
+		for i:=0;i<3;i++{
+			client.NewClient(gsr.Ip,gsr.Port,data)
+			time.Sleep(19*time.Millisecond)
+		}
+	}()
 }
 func ReceiveGetServerRequest(message []byte) *GetServerRequest {
 	gsr := new(GetServerRequest)
@@ -598,6 +606,14 @@ func SendGetServerResponse(gsrp *GetServerResponse)  {
 		fmt.Fprintln(os.Stdout,"SendGetServerResponse: Error converting data into Json!")
 		return
 	}
+
+	//go func() {
+	//	for i:=0;i<3;i++{
+	//		client.NewClient(gsrp.Ip,gsrp.Port,data)
+	//		time.Sleep(19*time.Millisecond)
+	//	}
+	//}()
+
 	client.NewClient(gsrp.Ip,gsrp.Port,data)
 }
 func ReceiveGetServerResponse(message []byte) *GetServerResponse {

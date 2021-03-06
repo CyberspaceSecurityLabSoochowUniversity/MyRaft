@@ -52,14 +52,15 @@ func SendVoteRequest(vr *VoteRequest)  {
 		fmt.Fprintln(os.Stdout,"VoteRequest: Error converting data into Json!")
 		return
 	}
+
 	client.NewClient(vr.Ip,vr.Port,data)
 }
 
-func ReceiveVoteVoteRequest(message []byte) *VoteRequest {
+func ReceiveVoteRequest(message []byte) *VoteRequest {
 	vr := new(VoteRequest)
 	err := json.Unmarshal(message,&vr)
 	if err != nil{
-		fmt.Fprintln(os.Stdout,"ReceiveVoteVoteRequest Error:",err.Error())
+		fmt.Fprintln(os.Stdout,"ReceiveVoteRequest Error:",err.Error())
 		return nil
 	}
 	return vr
@@ -89,6 +90,7 @@ func SendVoteResponse(vrp *VoteResponse)  {
 		fmt.Fprintln(os.Stdout,"VoteResponse: Error converting data into Json!")
 		return
 	}
+
 	client.NewClient(vrp.Ip,vrp.Port,data)
 }
 
@@ -113,7 +115,8 @@ func Vote(s *server,vr *VoteRequest)  {
 	}
 	state := Candidate
 	vote := true
-	if s.log.LastLogTerm > vr.LastLogTerm || s.log.LastLogIndex > vr.LastLogIndex || s.Term() > vr.Term{
+	//if s.log.LastLogTerm > vr.LastLogTerm || s.log.LastLogIndex > vr.LastLogIndex || s.Term() > vr.Term{
+	if s.log.LastLogTerm > vr.LastLogTerm || s.log.LastLogIndex > vr.LastLogIndex{
 		state = Follower
 		vote = false
 	}else if s.state == Candidate{
@@ -122,7 +125,7 @@ func Vote(s *server,vr *VoteRequest)  {
 		state = Follower
 		vote = false
 	}else{
-		s.votedFor = vr.Name
+		vote = true
 	}
 	if vote == true{
 		s.votedTerm = s.currentTerm
@@ -136,9 +139,10 @@ func Vote(s *server,vr *VoteRequest)  {
 		Ip: 			vr.ServerIp,
 		Port: 			vr.ServerPort,
 	}
-	SendVoteResponse(vrp)
 
-	peer := s.peers[vr.Name]
-	UpdatePeer(peer,peer.Name,peer.IP,peer.Port,state,vr.LastLogIndex,
-		vr.LastLogTerm,peer.heartbeatInterval,peer.lastActivity)
+	//peer := s.peers[vr.Name]
+	//UpdatePeer(peer,peer.Name,peer.IP,peer.Port,state,vr.LastLogIndex,
+	//	vr.LastLogTerm,peer.heartbeatInterval,peer.lastActivity)
+
+	SendVoteResponse(vrp)
 }

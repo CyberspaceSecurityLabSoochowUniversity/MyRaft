@@ -90,90 +90,96 @@ func ReceiveHeartBeat(message []byte) *heartBeat {
 }
 
 func leaderLoop(s *server,conn *net.UDPConn) {
+	fmt.Println("LeaderLoop Start")
 	s.leader = s.name
 	s.SetHeartbeatInterval(DefaultHeartbeatInterval)
 	startHeartBeat(s)		//领导者一上线就得广播心跳
-	for s.State() == Leader {
-		data := make([]byte, MaxServerRecLen)
-		_, _, err := conn.ReadFromUDP(data)
-		if err != nil {
-			fmt.Fprintf(os.Stderr, "Server(%s):Read udp content error:%s\n", s.ip, err.Error())
-			continue
-		}
-		data = bytes.Trim(data,"\x00")
-
-		//这里需要根据接收内容类型进行相应处理
-		data1 := new(client.Date)
-		err = json.Unmarshal(data, &data1)
-		if err != nil {
-			fmt.Fprintln(os.Stdout, "ReceiveData Error:", err.Error())
-			return
-		}
-		switch data1.Id {
-		case AddPeerOrder:
-			apr := ReceiveAddPeerRequest(data1.Value)
-			err = s.AddPeer(apr)
+	go func() {
+		for s.State() == Leader{
+			fmt.Println(s.peers)
+			data := make([]byte, MaxServerRecLen)
+			_, _, err := conn.ReadFromUDP(data)
 			if err != nil {
-				fmt.Fprintln(os.Stdout, "Server add peer error:", err.Error())
-			}
-			break
-		case AddPeerResponseOrder:
-			aprp := ReceiveAddPeerResponse(data1.Value)
-			_,ok := s.peers[aprp.Name]
-			if !ok{
-				peer := NewPeer(aprp.Name,aprp.IP,aprp.RecPort,aprp.State,aprp.LastLogIndex,
-					aprp.LastLogTerm,aprp.HeartbeatInterval,aprp.LastActivity)
-				s.peers[peer.Name] = peer		//添加对等点
-			}
-			break
-		case AppendLogEntryOrder:
-			ale := ReceiveAppendLogEntryRequest(data1.Value)
-			entry := s.log.entries[ale.LogIndex:]
-			alerp := NewAppendLogEntryResponse(s.name,entry,ale.ServerIp,ale.ServerPort)
-			SendAppendLogEntryResponse(alerp)
-			break
-		case VoteOrder:
-			vr := ReceiveVoteVoteRequest(data1.Value)
-			Vote(s,vr)
-			break
-		case AddLogEntryOrder:
-			addle :=ReceiveAddLogEntryRequest(data1.Value)
-			key := addle.Key
-			value := addle.Value
-			logEntry := NewLogEntry(s.log,0, s.log.LastLogIndex+1, s.currentTerm,key,value)
-			s.log.entries = append(s.log.entries, *logEntry)
-			s.log.LastLogIndex += 1
-			s.log.LastLogTerm = s.Term()
-
-			//将日志条目持久化log文件中
-
-			break
-		case StopServer:
-			stopRequest := ReceiveStopRequest(data1.Value)
-			if stopRequest.Name == s.name{
-				s.Stop()
+				fmt.Fprintf(os.Stderr, "Server(%s):Read udp content error:%s\n", s.ip, err.Error())
 				return
 			}
-			break
-		case DelPeerOrder:
-			dpr := ReceiveDelPeerRequest(data1.Value)
-			_,ok := s.peers[dpr.Name]
-			if ok == true{
-				delete(s.peers,dpr.Name)
+			data = bytes.Trim(data,"\x00")
+			//这里需要根据接收内容类型进行相应处理
+			data1 := new(client.Date)
+			err = json.Unmarshal(data, &data1)
+			if err != nil {
+				fmt.Fprintln(os.Stdout, "ReceiveData Error:", err.Error())
+				return
 			}
-			break
-		case GetOneServerOrder:
-			gsr := ReceiveGetServerRequest(data1.Value)
-			if gsr.Name == s.Name(){
-				gsrp := NewGetServerResponse(s,gsr.ClientIp,gsr.ClientPort,gsr.EntranceId,gsr.EntrancePort)
-				SendGetServerResponse(gsrp)
+			switch data1.Id {
+			case AddPeerOrder:
+				apr := ReceiveAddPeerRequest(data1.Value)
+				err = s.AddPeer(apr)
+				if err != nil {
+					fmt.Fprintln(os.Stdout, "Server add peer error:", err.Error())
+				}
+				break
+			case AddPeerResponseOrder:
+				aprp := ReceiveAddPeerResponse(data1.Value)
+				_,ok := s.peers[aprp.Name]
+				if !ok{
+					peer := NewPeer(aprp.Name,aprp.IP,aprp.RecPort,aprp.State,aprp.LastLogIndex,
+						aprp.LastLogTerm,aprp.HeartbeatInterval,aprp.LastActivity)
+					s.peers[peer.Name] = peer		//添加对等点
+				}
+				break
+			case AppendLogEntryOrder:
+				ale := ReceiveAppendLogEntryRequest(data1.Value)
+				entry := s.log.entries[ale.LogIndex:]
+				alerp := NewAppendLogEntryResponse(s.name,entry,ale.ServerIp,ale.ServerPort)
+				SendAppendLogEntryResponse(alerp)
+				break
+			case VoteOrder:
+				vr := ReceiveVoteRequest(data1.Value)
+				Vote(s,vr)
+				break
+			case AddLogEntryOrder:
+				addle :=ReceiveAddLogEntryRequest(data1.Value)
+				key := addle.Key
+				value := addle.Value
+				logEntry := NewLogEntry(s.log,0, s.log.LastLogIndex+1, s.currentTerm,key,value)
+				s.log.entries = append(s.log.entries, *logEntry)
+				s.log.LastLogIndex += 1
+				s.log.LastLogTerm = s.Term()
+				//将日志条目持久化log文件中
+
+				break
+			case StopServer:
+				stopRequest := ReceiveStopRequest(data1.Value)
+				if stopRequest.Name == s.name{
+					s.Stop()
+					return
+				}
+				break
+			case DelPeerOrder:
+				dpr := ReceiveDelPeerRequest(data1.Value)
+				_,ok := s.peers[dpr.Name]
+				if ok == true{
+					delete(s.peers,dpr.Name)
+				}
+				break
+			case GetOneServerOrder:
+				gsr := ReceiveGetServerRequest(data1.Value)
+				if gsr.Name == s.Name(){
+					gsrp := NewGetServerResponse(s,gsr.ClientIp,gsr.ClientPort,gsr.EntranceId,gsr.EntrancePort)
+					SendGetServerResponse(gsrp)
+				}
+				break
+			case MonitorRequestOrder:
+				mr := ReceiveMonitorRequest(data1.Value)
+				mrp := NewMonitorResponse(s.Name(),mr.EntranceIp,mr.EntranceRecPort)
+				SendMonitorResponse(mrp)
+				break
 			}
-			break
-		case MonitorRequestOrder:
-			mr := ReceiveMonitorRequest(data1.Value)
-			mrp := NewMonitorResponse(s.Name(),mr.EntranceIp,mr.EntranceRecPort)
-			SendMonitorResponse(mrp)
-			break
 		}
+	}()
+
+	for s.State() == Leader {
+
 	}
 }
